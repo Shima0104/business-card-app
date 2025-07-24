@@ -11,20 +11,18 @@ const UploadPage = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
 
-  const handleImageUpload = (event) => {
-    const files = Array.from(event.target.files);
-    setImages((prev) => [...prev, ...files]);
+const handleImageUpload = (event) => {
+    // 選択されたファイルを取得
+    const selectedFiles = Array.from(event.target.files);
 
-    // Convert images to base64 immediately
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target.result;
-        setImageUrls((prev) => [...prev, base64String]);
-        console.log('Preview URL:', base64String);
-      };
-      reader.readAsDataURL(file);
-    });
+    // ファイルごとに、{file本体, previewUrl} のオブジェクトを作成
+    const newImages = selectedFiles.map(file => ({
+      file: file,
+      previewUrl: URL.createObjectURL(file) // プレビュー用のURLを一時的に生成
+    }));
+
+    // imagesステートを更新
+    setImages(prevImages => [...prevImages, ...newImages]);
   };
 
 const handleSubmit = async (event) => {
@@ -155,16 +153,16 @@ const handleSubmit = async (event) => {
                 </label>
               </Box>
               
-              {imageUrls.length > 0 && (
+              {images.length > 0 && (
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="body2" gutterBottom>
                     プレビュー:
                   </Typography>
                   <Grid container spacing={2}>
-                    {imageUrls.map((url, index) => (
+                    {images.map((image, index) => (
                       <Grid item xs={12} sm={6} md={4} key={index}>
                         <img
-                          src={url}
+                          src={image.previewUrl}
                           alt={`preview-${index}`}
                           style={{
                             width: '100%',
@@ -178,6 +176,7 @@ const handleSubmit = async (event) => {
                   </Grid>
                 </Box>
               )}
+
 
               <Button
                 type="submit"
