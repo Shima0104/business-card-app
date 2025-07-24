@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const path = require('path');
+
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -129,6 +131,16 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use((req, res) => {
   res.status(404).json({ error: 'Not Found' });
 });
+
+// Reactアプリのビルドファイル（静的ファイル）を配信する設定
+app.use(express.static(path.join(__dirname, 'build')));
+
+// API以外のすべてのGETリクエストに対して、index.htmlを返す
+// これにより、React Routerが正しく機能します
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 
 const PORT = 3000;
 app.listen(PORT, () => {
