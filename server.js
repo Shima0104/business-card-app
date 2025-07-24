@@ -1,146 +1,53 @@
-require('dotenv').config();
-
+// 1. 必要な部品を読み込む
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
 const cors = require('cors');
-const fs = require('fs');
+const path = require('path');
 
+// 2. Expressアプリを初期化
 const app = express();
+const PORT = process.env.PORT || 3001;
 
-// CORS設定
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true
-}));
+// 3. 便利な機能を有効にする (Middleware)
+app.use(cors()); // 他のドメインからのアクセスを許可する
 
-// ミドルウェアの設定
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 4. アップロードされた画像を保存する場所の設定
+const upload = multer({ dest: 'uploads/' });
 
-// 静的ファイルの提供
-app.use(express.static('public'));
-
-// ルートパスの設定
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// APIルートの設定
-app.use('/api', express.json());
-
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const dest = path.join(__dirname, 'uploads');
-    console.log('Destination:', dest);
-    
-    // ディレクトリが存在しない場合は作成
-    if (!fs.existsSync(dest)) {
-      fs.mkdirSync(dest, { recursive: true });
-    }
-    
-    cb(null, dest);
-  },
-  filename: (req, file, cb) => {
-    const filename = Date.now() + path.extname(file.originalname);
-    console.log('Filename:', filename);
-    cb(null, filename);
-  }
-});
-
-const upload = multer({ 
-  storage: storage,
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  }
-});
-
-// API endpoint for uploading images
-app.post('/api/upload', (req, res, next) => {
-  upload.array('images', 10)(req, res, (err) => {
-    if (err) {
-      console.error('Upload error:', err);
-      return res.status(400).json({ error: err.message });
-    }
-
-    if (!req.files || req.files.length === 0) {
-      console.error('No files uploaded');
-      return res.status(400).json({ error: 'No files uploaded' });
-    }
-
-    try {
-      const urls = req.files.map(file => {
-        return `http://localhost:${process.env.PORT || 3000}/uploads/${file.filename}`;
-      });
-
-      console.log('Uploaded files:', urls);
-      res.json({ urls });
-    } catch (error) {
-      console.error('Processing error:', error);
-      next(error);
-    }
-    if (err) {
-      console.error('Upload error:', err);
-      return res.status(400).json({ error: err.message });
-    }
-
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ error: 'No files uploaded' });
-    }
-
-    const urls = req.files.map(file => {
-      return `http://localhost:${process.env.PORT}/uploads/${file.filename}`;
-    });
-
-    console.log('Uploaded files:', urls);
-    res.json({ urls });
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  
-  if (err.name === 'MulterError') {
-    return res.status(400).json({ error: 'ファイルアップロードエラー' });
-  }
-
-  if (err.message.includes('Only image files')) {
-    return res.status(400).json({ error: '画像ファイルのみアップロードできます' });
-  }
-
-  res.status(500).json({ error: 'サーバーでエラーが発生しました' });
-  console.error('Server error:', err);
-  res.status(500).json({ error: err.message });
-});
-
-// Serve uploaded files
+// 5. ユーザーがアップロードした画像にアクセスできるようにする設定
+// 例: /uploads/xxxxx というURLで画像が見られるようになる
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// 404エラーのハンドリング
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not Found' });
-});
-
-// Reactアプリのビルドファイル（静的ファイル）を配信する設定
+// 6. Reactアプリの完成版（buildフォルダ）を見せる設定
 app.use(express.static(path.join(__dirname, 'build')));
 
-// API以外のすべてのGETリクエストに対して、index.htmlを返す
-// これにより、React Routerが正しく機能します
+
+// -------------------- ここから下が、URLごとの具体的な処理 --------------------
+
+// 7. 画像アップロード用のAPIルート
+// POST /api/upload というURLに来たリクエストを処理する
+app.post('/api/upload', upload.array('images', 10), (req, res) => {
+  // ファイルがアップロードされなかった場合のエラー処理
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: '画像がアップロードされていません。' });
+  }
+
+  // アップロードされたファイルの新しいURLのリストを作成
+  const urls = req.files.map(file => `/uploads/${file.filename}`);
+  
+  // 成功したことを、URLのリストと一緒にフロントエンドに返す
+  res.json({ message: 'アップロード成功！', urls: urls });
+});
+
+// 8. その他のすべてのリクエストに対する処理
+// API以外のすべてのURLに対して、Reactアプリ本体（index.html）を返す
+// これが、画面を正しく表示させるための「最後の砦」
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
 
-const PORT = 3000;
+// 9. サーバーを指定したポートで起動する
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });
