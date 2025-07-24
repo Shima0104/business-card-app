@@ -45,7 +45,7 @@ const handleSubmit = async (event) => {
 
       // 2. アップロード用のデータ（FormData）を作成
       const formData = new FormData();
-      images.forEacsh((image) => {
+      images.forEach((image) => {
         // 'images' という名前で、ファイルの実体を追加していく
         formData.append('images', image.file);
       });
