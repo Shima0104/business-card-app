@@ -1,53 +1,49 @@
-// 1. 必要な部品を読み込む
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const path = require('path');
 
-// 2. Expressアプリを初期化
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 3. 便利な機能を有効にする (Middleware)
-app.use(cors()); // 他のドメインからのアクセスを許可する
+app.use(cors());
 
-// 4. アップロードされた画像を保存する場所の設定
-const upload = multer({ dest: 'uploads/' });
+// --- Vercel対応の修正点 1 ---
+// 保存先を、Vercelが唯一書き込みを許可している /tmp フォルダに変更
+const upload = multer({ dest: '/tmp' });
 
-// 5. ユーザーがアップロードした画像にアクセスできるようにする設定
-// 例: /uploads/xxxxx というURLで画像が見られるようになる
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// --- Vercel対応の修正点 2 ---
+// /tmp にアップロードされた一時ファイルを見せるためのルート
+app.use('/uploads', express.static('/tmp'));
 
-// 6. Reactアプリの完成版（buildフォルダ）を見せる設定
-app.use(express.static(path.join(__dirname, 'build')));
+// --- Vercel対応の修正点 3 ---
+// Reactアプリのビルドフォルダを正しく見つけるためのパス指定
+// Vercelでは、ビルド後の 'build' フォルダはプロジェクトのルートに配置される
+const buildPath = path.join(__dirname, '..', 'build');
+app.use(express.static(buildPath));
 
 
-// -------------------- ここから下が、URLごとの具体的な処理 --------------------
+// -------------------- URLごとの具体的な処理 --------------------
 
-// 7. 画像アップロード用のAPIルート
-// POST /api/upload というURLに来たリクエストを処理する
+// 画像アップロード用のAPIルート
 app.post('/api/upload', upload.array('images', 10), (req, res) => {
-  // ファイルがアップロードされなかった場合のエラー処理
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: '画像がアップロードされていません。' });
   }
 
-  // アップロードされたファイルの新しいURLのリストを作成
+  // /tmp に保存されたファイルへのURLを生成
   const urls = req.files.map(file => `/uploads/${file.filename}`);
   
-  // 成功したことを、URLのリストと一緒にフロントエンドに返す
   res.json({ message: 'アップロード成功！', urls: urls });
 });
 
-// 8. その他のすべてのリクエストに対する処理
-// API以外のすべてのURLに対して、Reactアプリ本体（index.html）を返す
-// これが、画面を正しく表示させるための「最後の砦」
+// その他のすべてのリクエストに対して、Reactアプリ本体（index.html）を返す
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+  res.sendFile(path.join(buildPath, 'index.html'));
 });
 
 
-// 9. サーバーを指定したポートで起動する
+// サーバーを起動
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
