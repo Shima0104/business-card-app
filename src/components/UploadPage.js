@@ -57,7 +57,7 @@ const UploadPage = () => {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
-        timeout: 30000
+        timeout: 30000,
         headers: {
           'Content-Type': 'multipart/form-data',
           'Accept': 'application/json'
