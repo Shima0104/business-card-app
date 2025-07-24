@@ -27,73 +27,76 @@ const UploadPage = () => {
     });
   };
 
-  const handleSubmit = async (event) => {
+const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     if (uploading) return;
     setUploading(true);
     setError(null);
 
     try {
-      // Validate images
+      // 1. バリデーション（入力チェック）
       if (images.length === 0) {
-        throw new Error('画像が選択されていません');
+        throw new Error('画像が選択されていません。');
       }
 
-      // Validate file size
-      const totalSize = images.reduce((sum, file) => sum + file.size, 0);
+      const totalSize = images.reduce((sum, img) => sum + img.file.size, 0);
       if (totalSize > 5 * 1024 * 1024) { // 5MB limit
-        throw new Error('画像の合計サイズは5MBを超えることはできません');
+        throw new Error('画像の合計サイズは5MBを超えることはできません。');
       }
 
+      // 2. アップロード用のデータ（FormData）を作成
       const formData = new FormData();
-      images.forEach((image, index) => {
-        formData.append('images', image);
+      images.forEacsh((image) => {
+        // 'images' という名前で、ファイルの実体を追加していく
+        formData.append('images', image.file);
       });
 
-      // Use axios for API request with timeout
-      try {
-        const response = await axios.post('/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        timeout: 30000,
+      // 3. サーバーにデータを送信し、レスポンスを待つ
+      const response = await axios.post('/api/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          'Accept': 'application/json'
         },
-        timeout: 30000, // 30秒のタイムアウト
+        timeout: 30000, // 30秒でタイムアウト
         onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          console.log(`Upload progress: ${percentCompleted}%`);
-        }
-      }).then(response => {
-        console.log('Upload response:', response.data);
-        const { urls } = response.data;
-        
-        // URLパラメータに画像URLをエンコード
-        const cardId = Date.now();
-        navigate(`/card/${cardId}?images=${encodeURIComponent(urls.join(','))}`);
-      }).catch(error => {
-        console.error('Upload error:', error);
-        setError('画像のアップロードに失敗しました');
-        
-        // エラーメッセージを表示
-        if (error.response) {
-          setError(error.response.data.error || 'アップロードに失敗しました');
-        } else if (error.request) {
-          setError('サーバーに接続できません');
-        } else {
-          setError('リクエストの作成に失敗しました');
-        }
-      }).finally(() => {
-        setUploading(false);
+          // 進捗状況をコンソールに表示（任意）
+          if (progressEvent.total) {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            console.log(`アップロード進捗: ${percentCompleted}%`);
+          }
+        },
       });
+
+      // 4. 成功した場合の処理
+      console.log('アップロード成功:', response.data);
+      const { urls } = response.data; // サーバーから返されたURLのリスト
+
+      // 5. 成功ページに遷移する
+      const cardId = Date.now(); // ユニークIDを生成
+      const encodedUrls = encodeURIComponent(urls.join(','));
+      navigate(`/card/${cardId}?images=${encodedUrls}`);
+
     } catch (error) {
-      console.error('Error:', error);
-      setError('アップロード処理中にエラーが発生しました');
+      // 6. エラーが発生した場合の処理
+      console.error('アップロード失敗:', error);
+      // 分かりやすいエラーメッセージを画面に表示する
+      if (error.response) { // サーバーからのエラーレスポンスがある場合
+        setError(error.response.data.error || 'サーバー側でエラーが発生しました。');
+      } else if (error.code === 'ECONNABORTED') { // タイムアウトした場合
+        setError('タイムアウトしました。通信環境の良い場所で再度お試しください。');
+      } else if (error.request) { // サーバーにリクエストが届かなかった場合
+        setError('サーバーに接続できませんでした。');
+      } else { // その他の予期せぬエラー
+        setError(error.message || '不明なエラーが発生しました。');
+      }
+
+    } finally {
+      // 7. 成功しても失敗しても、最後に必ず実行する処理
+      setUploading(false); // 「アップロード中...」を解除
     }
   };
+
+    /*ここまで*/
 
   return (
     <Box
