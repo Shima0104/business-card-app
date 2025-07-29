@@ -1,20 +1,17 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import SwipeableCardView from './components/SwipeableCardView';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UploadPage from './components/UploadPage';
-import './App.css';
+import CardPage from './components/CardPage';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="app">
-        <Routes>
-          <Route path="/" element={<UploadPage />} />
-          <Route path="/upload" element={<UploadPage />} />
-          <Route path="/card/:id" element={<SwipeableCardView />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <Router>
+      <Routes>
+        <Route path="/" element={<UploadPage />} />
+        {/* '/card' というパスを明確に定義する */}
+        <Route path="/card" element={<CardPage />} />
+      </Routes>
+    </Router>
   );
 }
 
