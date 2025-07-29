@@ -8,16 +8,10 @@ import { Box } from '@mui/material';
 const CardPage = () => {
   const [searchParams] = useSearchParams();
   const imagesParam = searchParams.get('images');
-  let images = [];
-
-  try {
-    if (imagesParam) {
-      images = JSON.parse(decodeURIComponent(imagesParam));
-    }
-  } catch (error) {
-    console.error("Failed to parse images from URL", error);
-    // エラーハンドリング: 例えばエラーメッセージを表示
-    return <Box>画像の読み込みに失敗しました。</Box>;
+let images = [];
+  if (imagesParam) {
+    // カンマで区切られた文字列を、デコードしてから配列に戻す
+    images = decodeURIComponent(imagesParam).split(',');
   }
   
   if (images.length === 0) {
