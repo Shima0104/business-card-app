@@ -56,8 +56,10 @@ const UploadPage = () => {
 
       // 短いURLのリストをURLにエンコードして、次のページに渡す
       const encodedUrls = encodeURIComponent(imageUrls.join(','));
-      navigate(`/card?images=${encodedUrls}`);
-
+      navigate({
+  pathname: '/card',
+  search: `?images=${encodedUrls}`
+});
     } catch (err) {
       console.error('Upload failed:', err);
       setError('画像のアップロード中にエラーが発生しました。');
