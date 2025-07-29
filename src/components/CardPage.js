@@ -1,61 +1,65 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Mousewheel } from 'swiper/modules';
-import 'swiper/css';
-import { Box } from '@mui/material';
+import { Box, Typography, Paper } from '@mui/material';
 
 const CardPage = () => {
   const [searchParams] = useSearchParams();
   const imagesParam = searchParams.get('images');
-let images = [];
-  if (imagesParam) {
-    // カンマで区切られた文字列を、デコードしてから配列に戻す
-    images = decodeURIComponent(imagesParam).split(',');
-  }
-  
-  if (images.length === 0) {
-    return <Box>表示する画像がありません。</Box>;
+
+  let decodedParam = '';
+  let images = [];
+  let error = '';
+
+  try {
+    if (imagesParam) {
+      decodedParam = decodeURIComponent(imagesParam);
+      images = decodedParam.split(',');
+    }
+  } catch (e) {
+    error = e.message;
   }
 
   return (
-    <Swiper
-      direction={'vertical'}
-      slidesPerView={1}
-      mousewheel={true}
-      modules={[Mousewheel]}
-      style={{ width: '100vw', height: '100vh', backgroundColor: 'black' }}
-    >
-      {images.map((base64String, index) => (
-        <SwiperSlide key={index} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-          <img src={base64String} alt={`slide-${index}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-        </SwiperSlide>
-      ))}
-    </Swiper>
+    <Box sx={{ p: 4 }}>
+      <Typography variant="h4" gutterBottom>デバッグ情報</Typography>
+
+      <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">1. URLから取得した生のパラメータ (imagesParam):</Typography>
+        <Typography sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
+          {imagesParam || 'null または undefined (パラメータ自体が存在しません)'}
+        </Typography>
+      </Paper>
+      
+      <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">2. デコード後の文字列 (decodedParam):</Typography>
+        <Typography sx={{ wordBreak: 'break-all', fontFamily: 'monospace' }}>
+          {decodedParam || '空文字列'}
+        </Typography>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">3. カンマで分割した後の配列 (images):</Typography>
+        <Typography component="pre" sx={{ fontFamily: 'monospace' }}>
+          {JSON.stringify(images, null, 2)}
+        </Typography>
+      </Paper>
+
+      <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">4. 配列の要素数 (images.length):</Typography>
+        <Typography sx={{ fontFamily: 'monospace' }}>
+          {images.length}
+        </Typography>
+      </Paper>
+      
+      <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+        <Typography variant="h6">5. 処理中に発生したエラー:</Typography>
+        <Typography color="error">
+          {error || 'なし'}
+        </Typography>
+      </Paper>
+
+    </Box>
   );
 };
 
-export default CardPage;```
-
-#### ステップ4：ルーティングの設定 (`App.js`)
-
-`src/App.js` を開き、新しい `CardPage` へのルートを追加します。
-
-```javascript
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import UploadPage from './components/UploadPage';
-import CardPage from './components/CardPage'; // これを追加
-
-function App() {
-  return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<UploadPage />} />
-        <Route path="/card" element={<CardPage />} /> // これを追加
-      </Routes>
-    </Router>
-  );
-}
-
-export default App;
+export default CardPage;
