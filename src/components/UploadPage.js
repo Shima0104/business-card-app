@@ -1,6 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Button, Paper, Typography, Grid, Card, CardContent } from '@mui/material';
+import axios from 'axios'; // axiosをインポート
+import { Box, Button, Paper, Typography, Grid, CircularProgress } from '@mui/material';
+
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ★ ここを、あなたのCloudinary情報に書き換えてください ★
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
+const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 const UploadPage = () => {
   const [images, setImages] = useState([]);
@@ -27,25 +36,31 @@ const UploadPage = () => {
     setError(null);
 
     try {
-      // Promise.allで、すべての画像のBase64変換を待つ
-      const base64Promises = images.map(image => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(image.file);
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = error => reject(error);
-        });
+      // 全ての画像をCloudinaryにアップロードする処理
+      const uploadPromises = images.map(image => {
+        const formData = new FormData();
+        formData.append('file', image.file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+        return axios.post(
+          `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+          formData
+        );
       });
 
-      const base64Strings = await Promise.all(base64Promises);
-      
-      // 非常に長いので、圧縮してURLに含める（ここでは単純なエンコードのみ）
-      const encodedImages = encodeURIComponent(JSON.stringify(base64Strings));
-      
-      navigate(`/card?images=${encodedImages}`);
+      // すべてのアップロードが終わるのを待つ
+      const uploadResponses = await Promise.all(uploadPromises);
+
+      // アップロード結果から、画像のURLだけを抜き出す
+      const imageUrls = uploadResponses.map(res => res.data.secure_url);
+
+      // 短いURLのリストをURLにエンコードして、次のページに渡す
+      const encodedUrls = encodeURIComponent(JSON.stringify(imageUrls));
+      navigate(`/card?images=${encodedUrls}`);
 
     } catch (err) {
-      setError('画像の処理中にエラーが発生しました。');
+      console.error('Upload failed:', err);
+      setError('画像のアップロード中にエラーが発生しました。');
       setLoading(false);
     }
   };
@@ -72,7 +87,7 @@ const UploadPage = () => {
           )}
 
           <Button type="submit" variant="contained" color="primary" fullWidth disabled={loading}>
-            {loading ? '作成中...' : '名刺を作成'}
+            {loading ? <CircularProgress size={24} /> : '名刺を作成'}
           </Button>
         </form>
       </Paper>
