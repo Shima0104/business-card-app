@@ -55,7 +55,7 @@ const UploadPage = () => {
       const imageUrls = uploadResponses.map(res => res.data.secure_url);
 
       // 短いURLのリストをURLにエンコードして、次のページに渡す
-      const encodedUrls = encodeURIComponent(JSON.stringify(imageUrls));
+      const encodedUrls = encodeURIComponent(imageUrls.join(','));
       navigate(`/card?images=${encodedUrls}`);
 
     } catch (err) {
