@@ -25,7 +25,7 @@ const CardPage = () => {
       slidesPerView={1}
       mousewheel={true}
       modules={[Mousewheel]}
-      style={{ width: '100vw', height: '100vh', backgroundColor: 'black' }}
+      style={{ width: '100vw', height: '100vh', backgroundColor: 'white' }}
     >
       {images.map((url, index) => (
         <SwiperSlide key={index} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
