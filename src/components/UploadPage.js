@@ -53,7 +53,7 @@ const SortableItem = ({ image, onRemove }) => {
       <img src={image.previewUrl} alt="preview" style={{ width: '100%', borderRadius: '4px', display: 'block' }} />
       <IconButton
         aria-label="delete"
-    onClick={(e) => {
+    onPointerDown={(e) => {
       e.stopPropagation();
       onRemove(image.id);
     }}
