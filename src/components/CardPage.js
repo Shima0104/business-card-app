@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom'; // ★ URLのID部分を取得するためのフック
-import { db } from '../firebase'; // ★ Firebase接続モジュール
-import { doc, getDoc } from "firebase/firestore"; // ★ Firestoreからデータを取得するための呪文
+import { db, doc, getDoc } from '../firebase';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel } from 'swiper/modules';
 import 'swiper/css';
