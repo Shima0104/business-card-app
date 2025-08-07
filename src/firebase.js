@@ -1,6 +1,6 @@
 // 1. Firebaseから、必要な機能をインポートする
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
 
 // 2. Firebaseプロジェクトの接続情報
 const firebaseConfig = {
@@ -12,7 +12,6 @@ const firebaseConfig = {
   appId: "1:875047669215:web:54f72251cab57c6306886a",
   measurementId: "G-LVMH43VH19"
 };
-// ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 // 3. Firebaseアプリを初期化する
 const app = initializeApp(firebaseConfig);
@@ -20,5 +19,12 @@ const app = initializeApp(firebaseConfig);
 // 4. Firestoreデータベースの機能を使えるように準備する
 const db = getFirestore(app);
 
-// 5. 他のファイルから、このdbを使えるように、エクスポートしておく
-export { db };
+// 5. 他のファイルから、すべての機能を使えるように、エクスポートしておく
+export { 
+  db, 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  doc, 
+  getDoc 
+};
