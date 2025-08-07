@@ -162,8 +162,19 @@ const UploadPage = () => {
       <Paper elevation={3} sx={{ maxWidth: '800px', mx: 'auto', p: 4 }}>
         <Typography variant="h4" gutterBottom>名刺情報入力</Typography>
         {error && <Typography color="error">{error}</Typography>}
-        <Button variant="contained" component="label" fullWidth sx={{ mb: 3 }}>画像を追加...</Button>
-        <input type="file" hidden multiple accept="image/*" onChange={handleImageUpload} />
+        <label htmlFor="image-upload-button">
+         <input
+          id="image-upload-button"
+          type="file"
+          hidden
+          multiple
+          accept="image/*"
+          onChange={handleImageUpload}
+        />
+       <Button variant="contained" component="span" fullWidth sx={{ mb: 3 }}>
+        画像を追加
+       </Button>
+      </label>
         
         {/* ★★★ DndContextとSortableContextで、グリッド全体を囲む ★★★ */}
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
