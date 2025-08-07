@@ -9,7 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<UploadPage />} />
         {/* '/card' というパスを明確に定義する */}
-        <Route path="/card" element={<CardPage />} />
+        <Route path="/card/:cardId" element={<CardPage />} />
       </Routes>
     </Router>
   );
