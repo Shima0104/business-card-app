@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { db } from '../firebase'; // ★ 私たちが作った、Firebase接続モジュールをインポート
-import { collection, addDoc, serverTimestamp } from "firebase/firestore"; // ★ Firestoreにデータを追加するための、新しい呪文
-
+import { db, collection, addDoc, serverTimestamp } from '../firebase';
 import {
   Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton
 } from '@mui/material';
