@@ -27,31 +27,33 @@ const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset';
 // ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 
 // ----------------------------------------------------
-// --- SortableImageEditorコンポーネント（旧ImageEditor） ---
+// --- SortableImageEditorコンポーネント（自己完結型へ進化） ---
 // ----------------------------------------------------
-const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
-  // ★ dnd-kitの並び替え機能のためのフックを、ここで使う
+const SortableImageEditor = ({ image, onRemove, onInfoChange }) => {
   const {
     attributes, listeners, setNodeRef, transform, transition,
   } = useSortable({ id: image.id });
 
+  // ★ このコンポーネント自身の、ローカルなステートを持つ
+  const [buttonText, setButtonText] = useState(image.buttonText);
+  const [linkUrl, setLinkUrl] = useState(image.linkUrl);
+
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    touchAction: 'none', // スマホでのタッチ操作をスムーズにするおまじない
+    transform: CSS.Transform.toString(transform), transition, touchAction: 'none',
+  };
+
+  // ★ 入力が終わった瞬間に（フォーカスが外れたら）、親コンポーネントに変更を通知する
+  const handleBlur = (field, value) => {
+    onInfoChange(image.id, field, value);
   };
 
   return (
-    // ★ divで囲み、dnd-kitからのプロパティを渡す
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Paper variant="outlined" sx={{ p: 2, position: 'relative' }}>
         <img src={image.previewUrl} alt="preview" style={{ width: '100%', borderRadius: '4px', display: 'block' }} />
         <IconButton
           aria-label="delete"
-          onPointerDown={(e) => { // ★ onPointerDownで、確実に削除イベントを拾う
-            e.stopPropagation();
-            onRemove(image.id);
-          }}
+          onPointerDown={(e) => { e.stopPropagation(); onRemove(image.id); }}
           sx={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255, 255, 255, 0.7)' }}
         >
           <CloseIcon fontSize="small" />
@@ -59,15 +61,17 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
         <TextField
           label="ボタンのテキスト"
           variant="standard" fullWidth size="small"
-          value={image.buttonText}
-          onChange={(e) => onUpdate(image.id, 'buttonText', e.target.value)}
+          value={buttonText} // ★ ローカルなステートを直接参照
+          onChange={(e) => setButtonText(e.target.value)} // ★ ローカルなステートを直接更新
+          onBlur={() => handleBlur('buttonText', buttonText)} // ★ 入力が終わったら親に通知
           sx={{ mt: 1 }}
         />
         <TextField
           label="リンク先のURL"
           variant="standard" fullWidth size="small"
-          value={image.linkUrl}
-          onChange={(e) => onUpdate(image.id, 'linkUrl', e.target.value)}
+          value={linkUrl} // ★ ローカルなステートを直接参照
+          onChange={(e) => setLinkUrl(e.target.value)} // ★ ローカルなステートを直接更新
+          onBlur={() => handleBlur('linkUrl', linkUrl)} // ★ 入力が終わったら親に通知
           sx={{ mt: 1 }}
         />
       </Paper>
@@ -98,7 +102,7 @@ const UploadPage = () => {
   };
 
   // テキスト入力欄の更新処理 (変更なし)
-  const handleUpdateImageInfo = (id, field, value) => {
+  const handleInfoChangeFromChild = (id, field, value) => {
     setImages(prev => prev.map(img => img.id === id ? { ...img, [field]: value } : img));
   };
   
@@ -185,7 +189,7 @@ const UploadPage = () => {
                   {/* ★ コンポーネント名をSortableImageEditorに変更 */}
                   <SortableImageEditor 
                     image={image} 
-                    onUpdate={handleUpdateImageInfo} 
+                    onUpdate={handleInfoChangeFromChild} 
                     onRemove={handleRemoveImage} 
                   />
                 </Grid>
