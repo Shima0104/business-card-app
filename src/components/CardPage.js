@@ -57,36 +57,66 @@ const CardPage = () => {
       slidesPerView={1}
       mousewheel={true}
       modules={[Mousewheel]}
-      style={{ width: '100vw', height: '100vh', backgroundColor: 'white' }}
+      style={{ width: '100vw', height: '100dvh', backgroundColor: 'white' }}
     >
       {slides.map((slide, index) => (
-        <SwiperSlide key={index} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-          <img src={slide.imageUrl} alt={`slide-${index}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-          
-          {/* ★ 新機能：リンクボタンの表示 */}
-          {slide.linkUrl && (
+    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      
+      {/* ★ 全体を囲む、カードコンテナ */}
+      <Box 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '90%', // 画面幅の90%を使う
+          maxWidth: '400px', // ただし、最大幅は400pxまで
+          height: '90%', // 画面の高さの90%を使う
+          maxHeight: '800px',// ただし、最大高さは800pxまで
+        }}
+      >
+
+        {/* 1. 画像エリア (残りのスペースをすべて使う) */}
+        <Box 
+          sx={{
+            flexGrow: 1, // ★ このBoxが、可能な限り、高さを広げる
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden', // はみ出した部分は隠す
+          }}
+        >
+          <img 
+            src={slide.imageUrl} 
+            alt={`slide-${index}`} 
+            style={{ 
+              maxWidth: '100%', 
+              maxHeight: '100%', 
+              objectFit: 'contain',
+              borderRadius: '8px', // 画像の角を少し丸めると、より美しくなります
+            }} 
+          />
+        </Box>
+
+        {/* 2. ボタンエリア (必要な分だけ、高さを取る) */}
+        {slide.linkUrl && (
+          <Box sx={{ pt: 2, flexShrink: 0 }}>
             <Button
               variant="contained"
               href={slide.linkUrl}
               target="_blank"
               rel="noopener noreferrer"
-              sx={{
-                position: 'absolute',
-                bottom: '10%', // 表示位置は、お好みで調整してください
-                left: '50%',
-                transform: 'translateX(-50%)',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                '&:hover': {
-                  backgroundColor: 'rgba(0, 0, 0, 1)',
-                }
-              }}
             >
               {slide.buttonText || '詳しくはこちら'}
             </Button>
-          )}
-        </SwiperSlide>
-      ))}
-    </Swiper>
+          </Box>
+        )}
+      </Box>
+
+    </SwiperSlide>
+  ))}
+</Swiper>
   );
 };
 
