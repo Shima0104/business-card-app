@@ -73,6 +73,7 @@ const UploadPage = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState(''); // ★ URL表示のワンクッションに使う
+  const [themeColor, setThemeColor] = useState('#2196f3'); // MUIのデフォルトの青色を初期値に
   const navigate = useNavigate();
 
   // dnd-kit用のセンサー設定 (変更なし)
@@ -111,7 +112,7 @@ const UploadPage = () => {
 
   // 名刺作成ボタンが押された時の処理
   const handleSubmit = async (event) => {
-    // ...（中略）...
+    
     setLoading(true);
     setError(null);
 
@@ -130,7 +131,7 @@ const UploadPage = () => {
 
       // Firestoreにデータを保存する
       const docRef = await addDoc(collection(db, "cards"), {
-        slides: cardSlides, createdAt: serverTimestamp(),
+        slides: cardSlides, createdAt: serverTimestamp(),themeColor: themeColor,
       });
       
       // ★★★ ここで、即座に遷移する代わりに、URLを生成してステートに保存する ★★★
@@ -151,6 +152,23 @@ const UploadPage = () => {
     <Box sx={{ p: 4 }}>
       <Paper elevation={3} sx={{ maxWidth: '800px', mx: 'auto', p: 4 }}>
         <Typography variant="h4" gutterBottom>名刺情報入力</Typography>
+
+<Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
+  <Typography variant="subtitle1">テーマカラー:</Typography>
+  <input
+    type="color"
+    value={themeColor}
+    onChange={(e) => setThemeColor(e.target.value)}
+    style={{ 
+      width: '100px', 
+      height: '40px', 
+      border: '1px solid #ccc', 
+      borderRadius: '4px',
+      cursor: 'pointer'
+    }}
+  />
+</Box>
+
         {error && <Typography color="error">{error}</Typography>}
         <label htmlFor="image-upload-button">
          <input
