@@ -5,10 +5,11 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel } from 'swiper/modules';
 import 'swiper/css';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
+import { getContrastingTextColor } from '../utils/colors';
 
 const CardPage = () => {
   const { cardId } = useParams(); // URLから :cardId の部分を取得する (例: /card/kjG8dJk...)
-  const [slides, setSlides] = useState([]);
+const [cardData, setCardData] = useState(null); // slides配列から、cardDataオブジェクトに変更
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -25,9 +26,7 @@ const CardPage = () => {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          // ドキュメントが見つかったら、その中のslides配列をステートに保存
-          const cardData = docSnap.data();
-          setSlides(cardData.slides.sort((a, b) => a.order - b.order)); // orderで並び替え
+     setCardData(docSnap.data()); // ★ ドキュメント全体のデータを保存
         } else {
           throw new Error("指定された名刺は見つかりませんでした。");
         }
@@ -107,6 +106,16 @@ const CardPage = () => {
               href={slide.linkUrl}
               target="_blank"
               rel="noopener noreferrer"
+
+                  sx={{
+    backgroundColor: cardData.themeColor || '#2196f3',
+    color: getContrastingTextColor(cardData.themeColor),
+    '&:hover': {
+      backgroundColor: cardData.themeColor || '#2196f3',
+      filter: 'brightness(90%)',
+    }
+  }}
+
             >
               {slide.buttonText || '詳しくはこちら'}
             </Button>
