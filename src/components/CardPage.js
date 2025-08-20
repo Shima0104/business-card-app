@@ -1,53 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom'; // ★ URLのID部分を取得するためのフック
-import { db, doc, getDoc } from '../firebase';
+import { useParams } from 'react-router-dom';
+import { db, doc, getDoc } from '../firebase'; // 総合受付から、すべてを受け取る
+import { getContrastingTextColor } from '../utils/colors'; // 賢い計算機を、受け取る
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel } from 'swiper/modules';
 import 'swiper/css';
 import { Box, CircularProgress, Typography, Button } from '@mui/material';
-import { getContrastingTextColor } from '../utils/colors';
 
 const CardPage = () => {
-  const { cardId } = useParams(); // URLから :cardId の部分を取得する (例: /card/kjG8dJk...)
-const [cardData, setCardData] = useState(null); // slides配列から、cardDataオブジェクトに変更
+  const { cardId } = useParams();
+  
+  // ★ カード全体の情報を、まとめて管理する、一つの「大きな箱」
+  const [cardData, setCardData] = useState(null);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // --- ★ このページが表示された時に、一度だけ実行される処理 ---
   useEffect(() => {
     const fetchCardData = async () => {
       try {
-        if (!cardId) {
-          throw new Error("カードIDが見つかりません。");
-        }
+        if (!cardId) throw new Error("カードIDが見つかりません。");
         
-        // Firestoreの "cards" というコレクションから、指定されたcardIdのドキュメントを探す
         const docRef = doc(db, "cards", cardId);
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-     setCardData(docSnap.data()); // ★ ドキュメント全体のデータを保存
+          // ★ Firestoreから取得した、すべてのデータを、大きな箱に、丸ごと、入れる
+          setCardData(docSnap.data());
         } else {
           throw new Error("指定された名刺は見つかりませんでした。");
         }
       } catch (err) {
-        console.error("Failed to fetch card data:", err);
         setError(err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchCardData();
-  }, [cardId]); // cardIdが変わった時だけ、この処理を再実行する
+  }, [cardId]);
 
 
-  // --- UIの描画部分 ---
   if (loading) {
-    return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><CircularProgress /></Box>;
+    return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100dvh' }}><CircularProgress /></Box>;
   }
   if (error) {
     return <Box sx={{ p: 4, textAlign: 'center' }}><Typography color="error">{error}</Typography></Box>;
+  }
+  // ★ cardDataが、まだ、空っぽ（null）の場合も、安全のために、考慮しておく
+  if (!cardData) {
+    return <Box sx={{ p: 4, textAlign: 'center' }}><Typography>データを読み込めませんでした。</Typography></Box>;
   }
 
   return (
@@ -58,74 +59,41 @@ const [cardData, setCardData] = useState(null); // slides配列から、cardData
       modules={[Mousewheel]}
       style={{ width: '100vw', height: '100dvh', backgroundColor: 'white' }}
     >
-      {slides.map((slide, index) => (
-    <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      
-      {/* ★ 全体を囲む、カードコンテナ */}
-      <Box 
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '90%', // 画面幅の90%を使う
-          maxWidth: '400px', // ただし、最大幅は400pxまで
-          height: '90%', // 画面の高さの90%を使う
-          maxHeight: '800px',// ただし、最大高さは800pxまで
-        }}
-      >
+      {/* ★ 大きな箱(cardData)の中の、slidesという引き出し(配列)を、使う */}
+      {cardData.slides.sort((a, b) => a.order - b.order).map((slide, index) => (
+        <SwiperSlide key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '90%', maxWidth: '400px', height: '90%', maxHeight: '800px' }}>
+            
+            <Box sx={{ flexGrow: 1, width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <img src={slide.imageUrl} alt={`slide-${index}`} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+            </Box>
 
-        {/* 1. 画像エリア (残りのスペースをすべて使う) */}
-        <Box 
-          sx={{
-            flexGrow: 1, // ★ このBoxが、可能な限り、高さを広げる
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden', // はみ出した部分は隠す
-          }}
-        >
-          <img 
-            src={slide.imageUrl} 
-            alt={`slide-${index}`} 
-            style={{ 
-              maxWidth: '100%', 
-              maxHeight: '100%', 
-              objectFit: 'contain',
-              borderRadius: '8px', // 画像の角を少し丸めると、より美しくなります
-            }} 
-          />
-        </Box>
-
-        {/* 2. ボタンエリア (必要な分だけ、高さを取る) */}
-        {slide.linkUrl && (
-          <Box sx={{ pt: 2, flexShrink: 0 }}>
-            <Button
-              variant="contained"
-              href={slide.linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-
+            {slide.linkUrl && (
+              <Box sx={{ pt: 2, flexShrink: 0 }}>
+                <Button
+                  variant="contained"
+                  href={slide.linkUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   sx={{
-    backgroundColor: cardData.themeColor || '#2196f3',
-    color: getContrastingTextColor(cardData.themeColor),
-    '&:hover': {
-      backgroundColor: cardData.themeColor || '#2196f3',
-      filter: 'brightness(90%)',
-    }
-  }}
-
-            >
-              {slide.buttonText || '詳しくはこちら'}
-            </Button>
+                    // ★ 大きな箱(cardData)の中の、themeColorという引き出しを、使う
+                    backgroundColor: cardData.themeColor || '#2196f3',
+                    color: getContrastingTextColor(cardData.themeColor),
+                    '&:hover': {
+                      backgroundColor: cardData.themeColor || '#2196f3',
+                      filter: 'brightness(90%)',
+                    }
+                  }}
+                >
+                  {slide.buttonText || '詳しくはこちら'}
+                </Button>
+              </Box>
+            )}
           </Box>
-        )}
-      </Box>
-
-    </SwiperSlide>
-  ))}
-</Swiper>
+        </SwiperSlide>
+      ))}
+    </Swiper>
   );
 };
 
