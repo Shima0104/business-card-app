@@ -1,7 +1,6 @@
 // ★ 1. 必要な道具を、すべて、一箇所に、美しく、並べる
 import React, { useState, useEffect } from 'react'; // ★ useEffectを、ここに追加！
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { db, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from '../firebase';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
