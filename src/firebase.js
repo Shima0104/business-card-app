@@ -7,13 +7,19 @@ import {
   serverTimestamp, 
   doc, 
   getDoc,
-  setDoc,     // ★ 更新の、神を、召喚
-  deleteDoc   // ★ 削除の、神を、召喚
+  setDoc,     // ★ 更新の神を召喚
+  deleteDoc   // ★ 削除の神を召喚
 } from "firebase/firestore";
 
 // 2. あなたの、秘密の、接続情報
 const firebaseConfig = {
-  // ★★★ あなたの、firebaseConfigを、ここに ★★★
+  apiKey: "AIzaSyBFShKtIH8hKw-SXwIp-LlEZEsrYaWhAjU",
+  authDomain: "business-card-app-c01d8.firebaseapp.com",
+  projectId: "business-card-app-c01d8",
+  storageBucket: "business-card-app-c01d8.firebasestorage.app",
+  messagingSenderId: "875047669215",
+  appId: "1:875047669215:web:54f72251cab57c6306886a",
+  measurementId: "G-LVMH43VH19"
 };
 
 // 3. Firebaseアプリを、初期化
