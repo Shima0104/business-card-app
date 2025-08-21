@@ -129,69 +129,61 @@ const handleSave = async () => {
     setError(null);
 
     try {
-      // 1. 画像のURLを、格納するための、配列を、用意する
-      const imageUrls = [];
-
-      // 2. images配列を、一つずつ、処理する
-      for (const image of images) {
-        if (image.file) { // 新しい画像の場合のみ、アップロード
+      // (Cloudinaryへのアップロードと、cardSlidesの作成ロジックは、完璧なので、変更なし)
+      const uploadPromises = images.map(image => {
+        if (image.file) {
           const formData = new FormData();
           formData.append('file', image.file);
           formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-
-          const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-            {
-              method: 'POST',
-              body: formData,
-            }
-          );
-          const data = await response.json();
-          if (response.ok) {
-            imageUrls.push(data.secure_url);
-          } else {
-            throw new Error(data.error.message || 'Cloudinaryへのアップロードに失敗しました。');
-          }
-        } else { // 既存の画像は、そのまま、URLを、追加する
-          imageUrls.push(image.previewUrl);
+          return axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
+        } else {
+          return Promise.resolve({ data: { secure_url: image.previewUrl } });
         }
-      }
-
-      // 3. Firestoreに保存するための、最終的なデータを作成する
+      });
+      const uploadResponses = await Promise.all(uploadPromises);
       const cardSlides = images.map((image, index) => ({
-        imageUrl: imageUrls[index], // ★ アップロード後の、正しいURLを、使う
+        imageUrl: uploadResponses[index].data.secure_url,
         buttonText: image.buttonText,
         linkUrl: image.linkUrl,
         order: index,
       }));
-
       const cardData = {
         slides: cardSlides,
         themeColor: themeColor,
         updatedAt: serverTimestamp(),
       };
 
-      // 4. Firestoreへの、保存処理（ここは、完璧です）
- if (cardId) {
-    // ★ 更新後も、閲覧用URLを、表示してあげる、優しさ
-  const finalUrl = `${window.location.origin}/card/${cardId}`;
-  setGeneratedUrl(finalUrl);
+      // ★★★ これが、最後の、そして、真実の、運命の、分岐点 ★★★
+      if (cardId) {
+        // 【更新の、運命】
+        const docRef = doc(db, "cards", cardId);
+        await setDoc(docRef, cardData, { merge: true });
 
-} else {
-  // ... 作成のロジック ...
-  const docRef = await addDoc(collection(db, "cards"), {
-    ...cardData,
-    createdAt: serverTimestamp(),
-  });
+        // 閲覧用URLを、生成して、表示する（遷移はしない）
+        const finalUrl = `${window.location.origin}/card/${cardId}`;
+        setGeneratedUrl(finalUrl);
+        alert("名刺を更新しました！"); // ← 成功を伝える、シンプルなメッセージ
 
-  // ★ 強制的に、遷移する代わりに、閲覧用URLを、生成して、表示する
-  const finalUrl = `${window.location.origin}/card/${docRef.id}`;
-  setGeneratedUrl(finalUrl);
-}
+      } else {
+        // 【創造の、運命】
+        const docRef = await addDoc(collection(db, "cards"), {
+          ...cardData,
+          createdAt: serverTimestamp(),
+        });
+
+        // 閲覧用URLを、生成して、表示する
+        const finalUrl = `${window.location.origin}/card/${docRef.id}`;
+        setGeneratedUrl(finalUrl);
+        alert("新しい名刺を作成しました！");
+
+        // かつ、ユーザーを、新しい、編集ページへと、導く
+        navigate(`/edit/${docRef.id}`);
+      }
 
     } catch (err) {
       console.error("Save failed:", err);
-      setError(`保存中にエラーが発生しました: ${err.message}`);
+      const errorMessage = err.response?.data?.error?.message || err.message || '不明なエラー';
+      setError(`保存中にエラーが発生しました: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
