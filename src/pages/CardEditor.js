@@ -1,3 +1,6 @@
+import { useParams } from 'react-router-dom';
+import { doc, getDoc } from '../firebase';
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -75,6 +78,37 @@ const UploadPage = () => {
   const [generatedUrl, setGeneratedUrl] = useState(''); // ★ URL表示のワンクッションに使う
   const [themeColor, setThemeColor] = useState('#2196f3'); // MUIのデフォルトの青色を初期値に
   const navigate = useNavigate();
+
+  const { cardId } = useParams(); // URLから、IDを取得する
+
+// このページが、表示された時に、一度だけ、実行される、魔法
+useEffect(() => {
+  // もし、cardIdが、存在するなら（編集モードなら）
+  if (cardId) {
+    const fetchCardData = async () => {
+      setLoading(true); // ローディング開始
+      const docRef = doc(db, "cards", cardId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // Firestoreから読み込んだデータを、このページの「状態」に、反映させる
+        setThemeColor(data.themeColor || '#2196f3');
+        setImages(data.slides.sort((a,b) => a.order - b.order).map(slide => ({
+          id: `firebase-${slide.imageUrl}`,
+          file: null,
+          previewUrl: slide.imageUrl,
+          buttonText: slide.buttonText,
+          linkUrl: slide.linkUrl,
+        })));
+      } else {
+        setError("お探しの名刺は見つかりませんでした。");
+      }
+      setLoading(false); // ローディング終了
+    };
+    fetchCardData();
+  }
+}, [cardId]); // この魔法は、cardIdが変わった時だけ、再実行される
 
   // dnd-kit用のセンサー設定 (変更なし)
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -207,7 +241,7 @@ const UploadPage = () => {
           disabled={loading || images.length === 0}
           onClick={handleSubmit} sx={{ mt: 3, py: 1.5 }}
         >
-          {loading ? <CircularProgress size={24} /> : 'この内容で名刺を作成する'}
+          {loading ? <CircularProgress size={24} /> : (cardId ? '内容を更新' : '名刺を作成')}
         </Button>
 
         {/* ★ URL表示エリア (これは以前のまま、完璧に動作する) */}
