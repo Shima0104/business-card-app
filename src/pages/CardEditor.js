@@ -130,7 +130,6 @@ const handleSave = async () => {
           formData.append('file', image.file);
           formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-          // ★★★ これが、真実の、アップロード方法 ★★★
           const response = await fetch(
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
             {
@@ -164,18 +163,26 @@ const handleSave = async () => {
       };
 
       // 4. Firestoreへの、保存処理（ここは、完璧です）
-      if (cardId) {
-        const docRef = doc(db, "cards", cardId);
-        await setDoc(docRef, cardData, { merge: true });
-        alert("名刺を更新しました！");
-      } else {
-        const docRef = await addDoc(collection(db, "cards"), {
-          ...cardData,
-          createdAt: serverTimestamp(),
-        });
-        alert("新しい名刺を作成しました！");
-        navigate(`/edit/${docRef.id}`);
-      }
+ if (cardId) {
+  // ... 更新のロジック ...
+  alert("名刺を更新しました！");
+
+  // ★ 更新後も、閲覧用URLを、表示してあげる、優しさ
+  const finalUrl = `${window.location.origin}/card/${cardId}`;
+  setGeneratedUrl(finalUrl);
+
+} else {
+  // ... 作成のロジック ...
+  const docRef = await addDoc(collection(db, "cards"), {
+    ...cardData,
+    createdAt: serverTimestamp(),
+  });
+
+  // ★ 強制的に、遷移する代わりに、閲覧用URLを、生成して、表示する
+  const finalUrl = `${window.location.origin}/card/${docRef.id}`;
+  setGeneratedUrl(finalUrl);
+  alert("新しい名刺を作成しました！下に表示されたURLを、ご利用ください。");
+}
 
     } catch (err) {
       console.error("Save failed:", err);
