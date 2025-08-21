@@ -187,9 +187,6 @@ const handleSave = async () => {
   }
 };
 
-
-**【新しい、完璧なコード】**
-
 const handleDelete = async () => {
   if (!cardId) return;
   if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
