@@ -82,6 +82,15 @@ const CardEditor = () => {
     }
   }, [cardId]);
 
+  useEffect(() => {
+  // もし、generatedUrlが空っぽでなく、何かがセットされたら...
+  if (generatedUrl) {
+    // ★ その時に初めて、alertを表示する！
+    alert("新しい名刺を作成しました！下に表示されたURLを、ご利用ください。");
+  }
+}, [generatedUrl]); // generatedUrlが変わった時だけ実行される
+
+
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const handleImageUpload = (event) => {
@@ -181,7 +190,6 @@ const handleSave = async () => {
   // ★ 強制的に、遷移する代わりに、閲覧用URLを、生成して、表示する
   const finalUrl = `${window.location.origin}/card/${docRef.id}`;
   setGeneratedUrl(finalUrl);
-  alert("新しい名刺を作成しました！下に表示されたURLをご利用ください。");
 }
 
     } catch (err) {
