@@ -113,80 +113,79 @@ const CardEditor = () => {
   };
 
 const handleSave = async () => {
-  if (images.length === 0) {
-    setError('画像が1枚以上必要です。');
-    return;
-  }
-  setLoading(true);
-  setError(null);
-
-  try {
-    // 1. 新しい画像だけをフィルタリング
-    const newImages = images.filter(image => image.file);
-    const existingImages = images.filter(image => !image.file);
-
-    let newImageUrls = [];
-    if (newImages.length > 0) {
-      // 2. 新しい画像がある場合のみ、Cloudinaryにアップロード
-      const uploadPromises = newImages.map(image => {
-        const formData = new FormData();
-        formData.append('file', image.file);
-        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-        // ★ Cloudinary APIへの、最も、標準的で、安全な、リクエスト
-        return axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
-      });
-      const uploadResponses = await Promise.all(uploadPromises);
-      newImageUrls = uploadResponses.map(res => res.data.secure_url);
+    if (images.length === 0) {
+      setError('画像が1枚以上必要です。');
+      return;
     }
-    
-    // 3. 既存の画像のURLと、新しい画像のURLを、合体させる
-    const allImageUrls = [
-      ...existingImages.map(img => img.previewUrl), // 既存のURL
-      ...newImageUrls // 新しくアップロードされたURL
-    ];
+    setLoading(true);
+    setError(null);
 
-    // 4. Firestoreに保存するための、最終的なデータを作成する
-    // ★ images配列の順番を、完全に、信頼する
-    const cardSlides = images.map((image, index) => {
-      // allImageUrlsから、正しいURLを、見つけ出す
-      const correspondingUrl = image.file ? newImageUrls.shift() : allImageUrls.find(url => url === image.previewUrl);
-      return {
-        imageUrl: correspondingUrl,
+    try {
+      // 1. 画像のURLを、格納するための、配列を、用意する
+      const imageUrls = [];
+
+      // 2. images配列を、一つずつ、処理する
+      for (const image of images) {
+        if (image.file) { // 新しい画像の場合のみ、アップロード
+          const formData = new FormData();
+          formData.append('file', image.file);
+          formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+
+          // ★★★ これが、真実の、アップロード方法 ★★★
+          const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+            {
+              method: 'POST',
+              body: formData,
+            }
+          );
+          const data = await response.json();
+          if (response.ok) {
+            imageUrls.push(data.secure_url);
+          } else {
+            throw new Error(data.error.message || 'Cloudinaryへのアップロードに失敗しました。');
+          }
+        } else { // 既存の画像は、そのまま、URLを、追加する
+          imageUrls.push(image.previewUrl);
+        }
+      }
+
+      // 3. Firestoreに保存するための、最終的なデータを作成する
+      const cardSlides = images.map((image, index) => ({
+        imageUrl: imageUrls[index], // ★ アップロード後の、正しいURLを、使う
         buttonText: image.buttonText,
         linkUrl: image.linkUrl,
         order: index,
+      }));
+
+      const cardData = {
+        slides: cardSlides,
+        themeColor: themeColor,
+        updatedAt: serverTimestamp(),
+      };
+
+      // 4. Firestoreへの、保存処理（ここは、完璧です）
+      if (cardId) {
+        const docRef = doc(db, "cards", cardId);
+        await setDoc(docRef, cardData, { merge: true });
+        alert("名刺を更新しました！");
+      } else {
+        const docRef = await addDoc(collection(db, "cards"), {
+          ...cardData,
+          createdAt: serverTimestamp(),
+        });
+        alert("新しい名刺を作成しました！");
+        navigate(`/edit/${docRef.id}`);
       }
-    });
 
-    const cardData = {
-      slides: cardSlides,
-      themeColor: themeColor,
-      updatedAt: serverTimestamp(),
-    };
-
-    if (cardId) {
-      const docRef = doc(db, "cards", cardId);
-      await setDoc(docRef, cardData, { merge: true });
-      alert("名刺を更新しました！");
-    } else {
-      const docRef = await addDoc(collection(db, "cards"), {
-        ...cardData,
-        createdAt: serverTimestamp(),
-      });
-      alert("新しい名刺を作成しました！");
-      navigate(`/edit/${docRef.id}`);
+    } catch (err) {
+      console.error("Save failed:", err);
+      setError(`保存中にエラーが発生しました: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-
-  } catch (err) {
-    console.error("Save failed:", err);
-    // ★ エラーの詳細を、ユーザーにも、少しだけ、親切に、表示する
-    const errorMessage = err.response?.data?.error?.message || err.message || '不明なエラー';
-    setError(`保存中にエラーが発生しました: ${errorMessage}`);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
+  
 const handleDelete = async () => {
   if (!cardId) return;
   if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
