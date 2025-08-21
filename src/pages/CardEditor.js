@@ -112,8 +112,8 @@ const CardEditor = () => {
     }
   };
 
-  const handleSave = async () => {
-      if (images.length === 0) {
+const handleSave = async () => {
+  if (images.length === 0) {
     setError('画像が1枚以上必要です。');
     return;
   }
@@ -121,68 +121,75 @@ const CardEditor = () => {
   setError(null);
 
   try {
-    const uploadPromises = images.map(image => {
-      if (image.file) { // 新しく追加された画像だけをアップロード
+    // 1. 新しい画像だけをフィルタリング
+    const newImages = images.filter(image => image.file);
+    const existingImages = images.filter(image => !image.file);
+
+    let newImageUrls = [];
+    if (newImages.length > 0) {
+      // 2. 新しい画像がある場合のみ、Cloudinaryにアップロード
+      const uploadPromises = newImages.map(image => {
         const formData = new FormData();
         formData.append('file', image.file);
         formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        // ★ Cloudinary APIへの、最も、標準的で、安全な、リクエスト
         return axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
-      } else { // 既存の画像はURLをそのまま使う
-        return Promise.resolve({ data: { secure_url: image.previewUrl } });
+      });
+      const uploadResponses = await Promise.all(uploadPromises);
+      newImageUrls = uploadResponses.map(res => res.data.secure_url);
+    }
+    
+    // 3. 既存の画像のURLと、新しい画像のURLを、合体させる
+    const allImageUrls = [
+      ...existingImages.map(img => img.previewUrl), // 既存のURL
+      ...newImageUrls // 新しくアップロードされたURL
+    ];
+
+    // 4. Firestoreに保存するための、最終的なデータを作成する
+    // ★ images配列の順番を、完全に、信頼する
+    const cardSlides = images.map((image, index) => {
+      // allImageUrlsから、正しいURLを、見つけ出す
+      const correspondingUrl = image.file ? newImageUrls.shift() : allImageUrls.find(url => url === image.previewUrl);
+      return {
+        imageUrl: correspondingUrl,
+        buttonText: image.buttonText,
+        linkUrl: image.linkUrl,
+        order: index,
       }
     });
-    const uploadResponses = await Promise.all(uploadPromises);
 
-    const cardSlides = images.map((image, index) => ({
-      imageUrl: uploadResponses[index].data.secure_url,
-      buttonText: image.buttonText,
-      linkUrl: image.linkUrl,
-      order: index,
-    }));
-    
     const cardData = {
       slides: cardSlides,
       themeColor: themeColor,
       updatedAt: serverTimestamp(),
     };
 
-    if (cardId) { // ★ 編集モードなら、更新(Update)！
+    if (cardId) {
       const docRef = doc(db, "cards", cardId);
-      await setDoc(docRef, cardData, { merge: true }); // ★ 更新の呪文！
+      await setDoc(docRef, cardData, { merge: true });
       alert("名刺を更新しました！");
-    } else { // ★ 新規作成モードなら、創造(Create)！
+    } else {
       const docRef = await addDoc(collection(db, "cards"), {
         ...cardData,
         createdAt: serverTimestamp(),
       });
       alert("新しい名刺を作成しました！");
-      navigate(`/edit/${docRef.id}`); // ★ 作成後は、新しい編集ページへ！
+      navigate(`/edit/${docRef.id}`);
     }
 
   } catch (err) {
-    setError('保存中にエラーが発生しました。');
+    console.error("Save failed:", err);
+    // ★ エラーの詳細を、ユーザーにも、少しだけ、親切に、表示する
+    const errorMessage = err.response?.data?.error?.message || err.message || '不明なエラー';
+    setError(`保存中にエラーが発生しました: ${errorMessage}`);
   } finally {
     setLoading(false);
   }
+};
 
-  };
-
-  const handleDelete = async () => {
-  if (!cardId) return;
-  if (window.confirm(...)) {
-    setLoading(true);
-    try {
-      await deleteDoc(doc(db, "cards", cardId));
-      navigate('/');
-    } catch (err) {
-      setError("削除中にエラーが発生しました。");
-      setLoading(false); // ★ 失敗した時しか、呼ばれない！
-    }
-  }
-};```
 
 **【新しい、完璧なコード】**
-```javascript
+
 const handleDelete = async () => {
   if (!cardId) return;
   if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
