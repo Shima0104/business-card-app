@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react'; // ★ useEffectを、ここに追加！
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import { db, collection, addDoc, serverTimestamp, doc, getDoc } from '../firebase';
+import { db, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from '../firebase';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
@@ -112,11 +112,75 @@ const CardEditor = () => {
     }
   };
 
-  // ★ handleSubmit は、まだ、何もしない（次のステップで、実装します）
-  const handleSubmit = async () => {
-    alert("「保存」機能は、次のステップで実装します！");
+  const handleSave = async () => {
+      if (images.length === 0) {
+    setError('画像が1枚以上必要です。');
+    return;
+  }
+  setLoading(true);
+  setError(null);
+
+  try {
+    const uploadPromises = images.map(image => {
+      if (image.file) { // 新しく追加された画像だけをアップロード
+        const formData = new FormData();
+        formData.append('file', image.file);
+        formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+        return axios.post(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, formData);
+      } else { // 既存の画像はURLをそのまま使う
+        return Promise.resolve({ data: { secure_url: image.previewUrl } });
+      }
+    });
+    const uploadResponses = await Promise.all(uploadPromises);
+
+    const cardSlides = images.map((image, index) => ({
+      imageUrl: uploadResponses[index].data.secure_url,
+      buttonText: image.buttonText,
+      linkUrl: image.linkUrl,
+      order: index,
+    }));
+    
+    const cardData = {
+      slides: cardSlides,
+      themeColor: themeColor,
+      updatedAt: serverTimestamp(),
+    };
+
+    if (cardId) { // ★ 編集モードなら、更新(Update)！
+      const docRef = doc(db, "cards", cardId);
+      await setDoc(docRef, cardData, { merge: true }); // ★ 更新の呪文！
+      alert("名刺を更新しました！");
+    } else { // ★ 新規作成モードなら、創造(Create)！
+      const docRef = await addDoc(collection(db, "cards"), {
+        ...cardData,
+        createdAt: serverTimestamp(),
+      });
+      alert("新しい名刺を作成しました！");
+      navigate(`/edit/${docRef.id}`); // ★ 作成後は、新しい編集ページへ！
+    }
+
+  } catch (err) {
+    setError('保存中にエラーが発生しました。');
+  } finally {
+    setLoading(false);
+  }
+
   };
 
+  const handleDelete = async () => {
+  if (!cardId) return;
+  
+  if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, "cards", cardId)); // ★ 削除の呪文！
+      navigate('/'); // ★ 削除後は、トップページへ！
+    } catch (err) {
+      setError("削除中にエラーが発生しました。");
+      setLoading(false);
+    }
+  }
+};
 
   return (
     <Box sx={{ p: 4 }}>
@@ -151,10 +215,23 @@ const CardEditor = () => {
         <Button 
           variant="contained" color="primary" fullWidth 
           disabled={loading || images.length === 0}
-          onClick={handleSubmit} sx={{ mt: 3, py: 1.5 }}
+          onClick={handleSave} sx={{ mt: 3, py: 1.5 }}
         >
           {loading ? <CircularProgress size={24} /> : (cardId ? '内容を更新' : '名刺を作成')}
         </Button>
+
+          {cardId && (
+  <Button 
+    variant="outlined" 
+    color="error" 
+    fullWidth 
+    disabled={loading}
+    onClick={handleDelete} // ★ handleDeleteを、呼び出す
+    sx={{ mt: 2 }}
+  >
+    この名刺を削除する
+  </Button>
+)}
       </Paper>
     </Box>
   );
