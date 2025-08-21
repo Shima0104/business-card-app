@@ -173,10 +173,7 @@ const handleSave = async () => {
 
       // 4. Firestoreへの、保存処理（ここは、完璧です）
  if (cardId) {
-  // ... 更新のロジック ...
-  alert("名刺を更新しました！");
-
-  // ★ 更新後も、閲覧用URLを、表示してあげる、優しさ
+    // ★ 更新後も、閲覧用URLを、表示してあげる、優しさ
   const finalUrl = `${window.location.origin}/card/${cardId}`;
   setGeneratedUrl(finalUrl);
 
