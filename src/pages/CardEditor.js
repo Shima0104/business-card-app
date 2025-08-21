@@ -169,15 +169,32 @@ const CardEditor = () => {
 
   const handleDelete = async () => {
   if (!cardId) return;
-  
-  if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
+  if (window.confirm(...)) {
     setLoading(true);
     try {
-      await deleteDoc(doc(db, "cards", cardId)); // ★ 削除の呪文！
-      navigate('/'); // ★ 削除後は、トップページへ！
+      await deleteDoc(doc(db, "cards", cardId));
+      navigate('/');
     } catch (err) {
       setError("削除中にエラーが発生しました。");
-      setLoading(false);
+      setLoading(false); // ★ 失敗した時しか、呼ばれない！
+    }
+  }
+};```
+
+**【新しい、完璧なコード】**
+```javascript
+const handleDelete = async () => {
+  if (!cardId) return;
+  if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
+    setLoading(true);
+    setError(null); // エラー表示を一旦リセット
+    try {
+      await deleteDoc(doc(db, "cards", cardId));
+      navigate('/');
+    } catch (err) {
+      setError("削除中にエラーが発生しました。");
+    } finally {
+      setLoading(false); // ★ 成功しても、失敗しても、必ず、最後に、呼ばれる！
     }
   }
 };
