@@ -10,7 +10,7 @@ import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, Icon
 import CloseIcon from '@mui/icons-material/Close';
 
 // ★ Cloudinary情報（変更なし）
-const CLOUDINARY_CLOUD_NAME = 'YOUR_CLOUD_NAME'; 
+const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
 
 // ★ SortableImageEditorコンポーネント（変更なし）
