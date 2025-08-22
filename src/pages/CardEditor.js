@@ -57,7 +57,6 @@ const CardEditor = () => {
   const [themeColor, setThemeColor] = useState('#2196f3');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [generatedUrl, setGeneratedUrl] = useState('');
 
   // ★ 3. useEffectの、魔法は、ここから、始まる
   useEffect(() => {
@@ -82,13 +81,6 @@ const CardEditor = () => {
     }
   }, [cardId]);
 
-  useEffect(() => {
-  // もし、generatedUrlが空っぽでなく、何かがセットされたら...
-  if (generatedUrl) {
-    // ★ その時に初めて、alertを表示する！
-    alert("新しい名刺を作成しました！下に表示されたURLを、ご利用ください。");
-  }
-}, [generatedUrl]); // generatedUrlが変わった時だけ実行される
 
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
@@ -165,13 +157,13 @@ const handleSave = async () => {
       if (cardId) {
         const docRef = doc(db, "cards", cardId);
         await setDoc(docRef, cardData, { merge: true });
-        const finalUrl = `${window.location.origin}/card/${cardId}`;
-        setGeneratedUrl(finalUrl);
         alert("名刺を更新しました！");
       } else {
         const docRef = await addDoc(collection(db, "cards"), {
           ...cardData,
           createdAt: serverTimestamp(),
+        });
+        navigate(`/edit/${docRef.id}`);
         });
         const finalUrl = `${window.location.origin}/card/${docRef.id}`;
         setGeneratedUrl(finalUrl);
@@ -253,6 +245,23 @@ const handleDelete = async () => {
     この名刺を削除する
   </Button>
 )}
+
+    {cardId && (
+      <Box sx={{ mt: 4, p: 2, border: '1px dashed grey' }}>
+        <Typography variant="h6" gutterBottom>完成した、名刺ページ</Typography>
+        <Typography variant="body2" gutterBottom>以下のURLを、相手に、共有してください。</Typography>
+        <Box sx={{ p: 1, backgroundColor: '#f5f5f5', my: 1 }}>
+          <Typography sx={{ wordBreak: 'break-all' }}>
+            {`${window.location.origin}/card/${cardId}`}
+          </Typography>
+        </Box>
+        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+          <Button variant="contained" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/card/${cardId}`)}>コピー</Button>
+          <Button variant="outlined" href={`${window.location.origin}/card/${cardId}`} target="_blank" rel="noopener noreferrer">開く</Button>
+        </Box>
+      </Box>
+    )}
+  
       </Paper>
     </Box>
   );
