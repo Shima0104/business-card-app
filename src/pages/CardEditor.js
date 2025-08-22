@@ -1,5 +1,4 @@
-// ★ 1. 必要な道具を、すべて、一箇所に、美しく、並べる
-import React, { useState, useEffect } from 'react'; // ★ useEffectを、ここに追加！
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { db, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from '../firebase';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
@@ -9,11 +8,9 @@ import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-// ★ Cloudinary情報（変更なし）
 const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
 
-// ★ SortableImageEditorコンポーネント（変更なし）
 const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: image.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -47,8 +44,6 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
   );
 };
 
-
-// ★ 2. コンポーネントの名前を、ファイル名と、一致させる
 const CardEditor = () => {
   const { cardId } = useParams();
   const navigate = useNavigate();
@@ -58,7 +53,6 @@ const CardEditor = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // ★ 3. useEffectの、魔法は、ここから、始まる
   useEffect(() => {
     if (cardId) {
       const fetchCardData = async () => {
@@ -80,8 +74,6 @@ const CardEditor = () => {
       fetchCardData();
     }
   }, [cardId]);
-
-
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
@@ -112,14 +104,11 @@ const CardEditor = () => {
     }
   };
 
-const handleSave = async () => {
+  const handleSave = async () => {
     if (images.length === 0) {
-      setError('画像が1枚以上必要です。');
-      return;
+      setError('画像が1枚以上必要です。'); return;
     }
-    setLoading(true);
-    setError(null);
-
+    setLoading(true); setError(null);
     try {
       const imageUrls = [];
       for (const image of images) {
@@ -127,12 +116,7 @@ const handleSave = async () => {
           const formData = new FormData();
           formData.append('file', image.file);
           formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-          
-          // ★★★ 真実の、"fetch" を、使う ★★★
-          const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-            { method: 'POST', body: formData }
-          );
+          const response = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, { method: 'POST', body: formData });
           const data = await response.json();
           if (!response.ok) throw new Error(data.error.message);
           imageUrls.push(data.secure_url);
@@ -140,79 +124,53 @@ const handleSave = async () => {
           imageUrls.push(image.previewUrl);
         }
       }
-
       const cardSlides = images.map((image, index) => ({
-        imageUrl: imageUrls[index],
-        buttonText: image.buttonText,
-        linkUrl: image.linkUrl,
-        order: index,
+        imageUrl: imageUrls[index], buttonText: image.buttonText, linkUrl: image.linkUrl, order: index,
       }));
-
-      const cardData = {
-        slides: cardSlides,
-        themeColor: themeColor,
-        updatedAt: serverTimestamp(),
-      };
-
+      const cardData = { slides: cardSlides, themeColor: themeColor, updatedAt: serverTimestamp() };
       if (cardId) {
         const docRef = doc(db, "cards", cardId);
         await setDoc(docRef, cardData, { merge: true });
         alert("名刺を更新しました！");
       } else {
-        const docRef = await addDoc(collection(db, "cards"), {
-          ...cardData,
-          createdAt: serverTimestamp(),
-        });
-        navigate(`/edit/${docRef.id}`);
-        });
-        const finalUrl = `${window.location.origin}/card/${docRef.id}`;
-        setGeneratedUrl(finalUrl);
-        alert("新しい名刺を作成しました！");
+        const docRef = await addDoc(collection(db, "cards"), { ...cardData, createdAt: serverTimestamp() });
         navigate(`/edit/${docRef.id}`);
       }
-
     } catch (err) {
-      console.error("Save failed:", err);
       setError(`保存中にエラーが発生しました: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
-  
-const handleDelete = async () => {
-  if (!cardId) return;
-  if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
-    setLoading(true);
-    setError(null); // エラー表示を一旦リセット
-    try {
-      await deleteDoc(doc(db, "cards", cardId));
-      navigate('/');
-    } catch (err) {
-      setError("削除中にエラーが発生しました。");
-    } finally {
-      setLoading(false); // ★ 成功しても、失敗しても、必ず、最後に、呼ばれる！
+
+  const handleDelete = async () => {
+    if (!cardId) return;
+    if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
+      setLoading(true); setError(null);
+      try {
+        await deleteDoc(doc(db, "cards", cardId));
+        navigate('/');
+      } catch (err) {
+        setError("削除中にエラーが発生しました。");
+      } finally {
+        setLoading(false);
+      }
     }
-  }
-};
+  };
 
   return (
     <Box sx={{ p: 4 }}>
       <Paper elevation={3} sx={{ maxWidth: '800px', mx: 'auto', p: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          {cardId ? '名刺を編集' : '新しい名刺を作成'}
-        </Typography>
-
+        <Typography variant="h4" gutterBottom>{cardId ? '名刺を編集' : '新しい名刺を作成'}</Typography>
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="subtitle1">テーマカラー:</Typography>
           <input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} style={{ width: '100px', height: '40px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}/>
         </Box>
-
         {error && <Typography color="error">{error}</Typography>}
         <label htmlFor="image-upload-button">
           <input id="image-upload-button" type="file" hidden multiple accept="image/*" onChange={handleImageUpload}/>
           <Button variant="contained" component="span" fullWidth sx={{ mb: 3 }}>画像を追加</Button>
         </label>
-        
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={images.map(img => img.id)} strategy={rectSortingStrategy}>
             <Grid container spacing={3}>
@@ -224,48 +182,30 @@ const handleDelete = async () => {
             </Grid>
           </SortableContext>
         </DndContext>
-
-        <Button 
-          variant="contained" color="primary" fullWidth 
-          disabled={loading || images.length === 0}
-          onClick={handleSave} sx={{ mt: 3, py: 1.5 }}
-        >
+        <Button variant="contained" color="primary" fullWidth disabled={loading || images.length === 0} onClick={handleSave} sx={{ mt: 3, py: 1.5 }}>
           {loading ? <CircularProgress size={24} /> : (cardId ? '内容を更新' : '名刺を作成')}
         </Button>
-
-          {cardId && (
-  <Button 
-    variant="outlined" 
-    color="error" 
-    fullWidth 
-    disabled={loading}
-    onClick={handleDelete} // ★ handleDeleteを、呼び出す
-    sx={{ mt: 2 }}
-  >
-    この名刺を削除する
-  </Button>
-)}
-
-    {cardId && (
-      <Box sx={{ mt: 4, p: 2, border: '1px dashed grey' }}>
-        <Typography variant="h6" gutterBottom>完成した、名刺ページ</Typography>
-        <Typography variant="body2" gutterBottom>以下のURLを、相手に、共有してください。</Typography>
-        <Box sx={{ p: 1, backgroundColor: '#f5f5f5', my: 1 }}>
-          <Typography sx={{ wordBreak: 'break-all' }}>
-            {`${window.location.origin}/card/${cardId}`}
-          </Typography>
-        </Box>
-        <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-          <Button variant="contained" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/card/${cardId}`)}>コピー</Button>
-          <Button variant="outlined" href={`${window.location.origin}/card/${cardId}`} target="_blank" rel="noopener noreferrer">開く</Button>
-        </Box>
-      </Box>
-    )}
-  
+        {cardId && (
+          <Button variant="outlined" color="error" fullWidth disabled={loading} onClick={handleDelete} sx={{ mt: 2 }}>
+            この名刺を削除する
+          </Button>
+        )}
+        {cardId && (
+          <Box sx={{ mt: 4, p: 2, border: '1px dashed grey' }}>
+            <Typography variant="h6" gutterBottom>完成した名刺ページ</Typography>
+            <Typography variant="body2" gutterBottom>以下のURLを相手に共有してください。</Typography>
+            <Box sx={{ p: 1, backgroundColor: '#f5f5f5', my: 1 }}>
+              <Typography sx={{ wordBreak: 'break-all' }}>{`${window.location.origin}/card/${cardId}`}</Typography>
+            </Box>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+              <Button variant="contained" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/card/${cardId}`)}>コピー</Button>
+              <Button variant="outlined" href={`${window.location.origin}/card/${cardId}`} target="_blank" rel="noopener noreferrer">開く</Button>
+            </Box>
+          </Box>
+        )}
       </Paper>
     </Box>
   );
 };
 
-// ★ 4. コンポーネントを、正しい名前で、エクスポートする
 export default CardEditor;
