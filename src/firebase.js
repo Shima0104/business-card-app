@@ -1,8 +1,17 @@
-// 1. Firebaseから、必要な機能をインポートする
+// 1. Firebaseから、必要な「すべての」機能を、インポートする
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  doc, 
+  getDoc,
+  setDoc,     // ★ 更新の神を召喚
+  deleteDoc   // ★ 削除の神を召喚
+} from "firebase/firestore";
 
-// 2. Firebaseプロジェクトの接続情報
+// 2. あなたの、秘密の、接続情報
 const firebaseConfig = {
   apiKey: "AIzaSyBFShKtIH8hKw-SXwIp-LlEZEsrYaWhAjU",
   authDomain: "business-card-app-c01d8.firebaseapp.com",
@@ -13,18 +22,20 @@ const firebaseConfig = {
   measurementId: "G-LVMH43VH19"
 };
 
-// 3. Firebaseアプリを初期化する
+// 3. Firebaseアプリを、初期化
 const app = initializeApp(firebaseConfig);
 
-// 4. Firestoreデータベースの機能を使えるように準備する
+// 4. Firestoreデータベースを、準備
 const db = getFirestore(app);
 
-// 5. 他のファイルから、すべての機能を使えるように、エクスポートしておく
+// 5. 「すべての」機能を、他のファイルから、使えるように、エクスポートする
 export { 
   db, 
   collection, 
   addDoc, 
   serverTimestamp, 
   doc, 
-  getDoc 
+  getDoc,
+  setDoc,     // ★ 更新の、神を、派遣
+  deleteDoc   // ★ 削除の、神を、派遣
 };
