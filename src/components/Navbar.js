@@ -1,29 +1,25 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
-import { signOut, onAuthStateChanged, getAuth } from 'firebase/auth';
+import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
-import { useState, useEffect } from 'react';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null); // ★ 現在ログインしているアカウントの情報を保存する
+  const [user, setUser] = useState(null);
 
-  // ★ アカウントの状態変化を、常に監視し続ける目
   useEffect(() => {
-    const authInstance = getAuth();
-const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => { ... });
+    const auth = getAuth(); 
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
-    return () => unsubscribe(); // 監視を止める
+    return () => unsubscribe();
   }, []);
 
-  // ★ ログアウト
   const handleLogout = async () => {
     try {
-      const authInstance = getAuth();
-await signOut(authInstance);
-      navigate('/login'); // ログアウトしたら、ログインの門へ
+      const auth = getAuth(); 
+      await signOut(auth);
+      navigate('/login');
     } catch (error) {
       console.error("Logout Error:", error);
     }
@@ -37,13 +33,11 @@ await signOut(authInstance);
         </Typography>
         <Box>
           {user ? (
-            // ★ ログイン中なら...
             <>
               <Button color="inherit" component={RouterLink} to="/edit">新規作成</Button>
               <Button color="inherit" onClick={handleLogout}>ログアウト</Button>
             </>
           ) : (
-            // ★ ログアウト中なら...
             <>
               <Button color="inherit" component={RouterLink} to="/login">ログイン</Button>
               <Button color="inherit" component={RouterLink} to="/signup">新規登録</Button>
