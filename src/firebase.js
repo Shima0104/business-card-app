@@ -29,12 +29,10 @@ const app = initializeApp(firebaseConfig);
 // 4. Firestoreデータベースを、準備
 const db = getFirestore(app);
 
-const auth = getAuth(app);
 
 // 5. 「すべての」機能を、他のファイルから、使えるように、エクスポートする
 export { 
   db, 
-  auth,
   collection, 
   addDoc, 
   serverTimestamp, 
