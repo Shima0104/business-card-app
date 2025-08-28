@@ -7,6 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { getAuth } from 'firebase/auth';
 
 const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
@@ -133,9 +134,21 @@ const CardEditor = () => {
         await setDoc(docRef, cardData, { merge: true });
         alert("名刺を更新しました！");
       } else {
-        const docRef = await addDoc(collection(db, "cards"), { ...cardData, createdAt: serverTimestamp() });
-        navigate(`/edit/${docRef.id}`);
-      }
+        const auth = getAuth(); 
+  const currentUser = auth.currentUser; 
+
+  if (currentUser) { 
+    const docRef = await addDoc(collection(db, "cards"), {
+      ...cardData,
+      createdAt: serverTimestamp(),
+      ownerId: currentUser.uid, 
+    });
+    navigate(`/edit/${docRef.id}`);
+  } else {
+   
+    setError("ログインしていません。作成できません。");
+  }
+}
     } catch (err) {
       setError(`保存中にエラーが発生しました: ${err.message}`);
     } finally {
