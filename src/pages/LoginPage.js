@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; // ★ 現場で、直接、召喚
 import { Box, Button, Paper, TextField, Typography } from '@mui/material';
 
 const LoginPage = () => {
@@ -10,17 +9,15 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  // ★ 帰還の儀式
   const handleLogin = async (event) => {
     event.preventDefault();
     setError('');
     try {
-      // ★ 呪文を唱える！
-      const authInstance = getAuth();
-await signInWithEmailAndPassword(authInstance, email, password);
-      navigate('/'); // 成功したら、トップページへ
+      const auth = getAuth(); // ★ 儀式の、直前に、道を、確保
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate('/');
     } catch (err) {
-      setError(err.message); // 失敗したら、理由を表示
+      setError(err.message);
     }
   };
 
@@ -29,24 +26,8 @@ await signInWithEmailAndPassword(authInstance, email, password);
       <Paper sx={{ p: 4, maxWidth: '400px', width: '100%' }}>
         <Typography variant="h4" gutterBottom>ログイン</Typography>
         <form onSubmit={handleLogin}>
-          <TextField
-            label="メールアドレス"
-            type="email"
-            fullWidth
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="パスワード"
-            type="password"
-            fullWidth
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 2 }}
-          />
+          <TextField label="メールアドレス" type="email" fullWidth required value={email} onChange={(e) => setEmail(e.target.value)} sx={{ mb: 2 }} />
+          <TextField label="パスワード" type="password" fullWidth required value={password} onChange={(e) => setPassword(e.target.value)} sx={{ mb: 2 }} />
           {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
           <Button type="submit" variant="contained" fullWidth>ログイン</Button>
         </form>
