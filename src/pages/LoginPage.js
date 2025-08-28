@@ -16,7 +16,8 @@ const LoginPage = () => {
     setError('');
     try {
       // ★ 呪文を唱える！
-      await signInWithEmailAndPassword(auth, email, password);
+      const authInstance = getAuth();
+await signInWithEmailAndPassword(authInstance, email, password);
       navigate('/'); // 成功したら、トップページへ
     } catch (err) {
       setError(err.message); // 失敗したら、理由を表示
