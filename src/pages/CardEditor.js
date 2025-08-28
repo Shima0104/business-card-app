@@ -7,7 +7,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
@@ -54,28 +54,56 @@ const CardEditor = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  const [user, setUser] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+  
   useEffect(() => {
-    if (cardId) {
-      const fetchCardData = async () => {
-        setLoading(true);
-        const docRef = doc(db, "cards", cardId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+    const fetchAndVerify = async () => {
+      if (!cardId) { // 新規作成モード
+        setIsOwner(true); // ★ 新規作成は、常に「自分」のもの
+        setLoading(false);
+        return;
+      }
+      
+      // 編集モード
+      setLoading(true);
+      const docRef = doc(db, "cards", cardId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        // ★ データの所有者(data.ownerId)と、今ログインしている人(user.uid)を比較
+        if (user && user.uid === data.ownerId) {
+          setIsOwner(true);
           setThemeColor(data.themeColor || '#2196f3');
           setImages(data.slides.sort((a,b) => a.order - b.order).map(slide => ({
             id: `firebase-${slide.imageUrl}`, file: null, previewUrl: slide.imageUrl,
             buttonText: slide.buttonText, linkUrl: slide.linkUrl,
           })));
         } else {
-          setError("お探しの名刺は見つかりませんでした。");
+          setIsOwner(false); // 所有者ではない
         }
-        setLoading(false);
-      };
-      fetchCardData();
-    }
-  }, [cardId]);
+      } else {
+        setError("お探しの名刺は見つかりませんでした。");
+      }
+      setLoading(false);
+    };
 
+    // ★ ユーザー情報の確認が終わってから、データの取得と比較を開始する
+    if (user !== undefined) {
+        fetchAndVerify();
+    }
+  }, [cardId, user]);
+  
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const handleImageUpload = (event) => {
@@ -170,6 +198,23 @@ const CardEditor = () => {
       }
     }
   };
+
+  if (loading) {
+    return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box>;
+  }
+  if (error) {
+    return <Box sx={{ p: 4, textAlign: 'center' }}><Typography color="error">{error}</Typography></Box>;
+  }
+  if (!isOwner) { // ★ 所有者でなければ、門前払い
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography variant="h4" color="error">アクセス権がありません</Typography>
+        <Typography>このページを編集する権限がありません。ログインするか、別のユーザーでログインしてください。</Typography>
+        <Button component={RouterLink} to="/login" variant="contained" sx={{ mt: 2 }}>ログインページへ</Button>
+      </Box>
+    );
+  }
+
 
   return (
     <Box sx={{ p: 4 }}>
