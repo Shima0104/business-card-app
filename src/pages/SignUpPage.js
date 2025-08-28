@@ -15,7 +15,8 @@ const SignUpPage = () => {
     event.preventDefault();
     setError('');
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+     const authInstance = getAuth();
+await createUserWithEmailAndPassword(authInstance, email, password);
       alert('アカウントを作成しました！');
       navigate('/'); // 成功したら、トップページへ
     } catch (err) {
