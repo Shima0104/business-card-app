@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
 import { db, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from '../firebase';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
-import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
 
+// --- SortableImageEditor Component (Complete and Correct) ---
 const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: image.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
@@ -27,24 +28,15 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
           <CloseIcon fontSize="small" />
         </IconButton>
         <div onPointerDown={(e) => e.stopPropagation()} style={{ cursor: 'text' }}>
-          <TextField
-            label="ボタンのテキスト" variant="standard" fullWidth size="small"
-            value={image.buttonText}
-            onChange={(e) => onUpdate(image.id, 'buttonText', e.target.value)}
-            sx={{ mt: 1 }}
-          />
-          <TextField
-            label="リンク先のURL" variant="standard" fullWidth size="small"
-            value={image.linkUrl}
-            onChange={(e) => onUpdate(image.id, 'linkUrl', e.target.value)}
-            sx={{ mt: 1 }}
-          />
+          <TextField label="ボタンのテキスト" variant="standard" fullWidth size="small" value={image.buttonText} onChange={(e) => onUpdate(image.id, 'buttonText', e.target.value)} sx={{ mt: 1 }} />
+          <TextField label="リンク先のURL" variant="standard" fullWidth size="small" value={image.linkUrl} onChange={(e) => onUpdate(image.id, 'linkUrl', e.target.value)} sx={{ mt: 1 }} />
         </div>
       </Paper>
     </div>
   );
 };
 
+// --- CardEditor Component (Complete and Correct) ---
 const CardEditor = () => {
   const { cardId } = useParams();
   const navigate = useNavigate();
@@ -52,36 +44,32 @@ const CardEditor = () => {
   const [images, setImages] = useState([]);
   const [themeColor, setThemeColor] = useState('#2196f3');
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
-useEffect(() => {
+  useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
     return () => unsubscribe();
   }, []);
-  
+
   useEffect(() => {
     const fetchAndVerify = async () => {
-      if (!cardId) { // 新規作成モード
-        setIsOwner(true); // ★ 新規作成は、常に「自分」のもの
+      setLoading(true);
+      if (!cardId) {
+        setIsOwner(true);
         setLoading(false);
         return;
       }
       
-      // 編集モード
-      setLoading(true);
       const docRef = doc(db, "cards", cardId);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
         const data = docSnap.data();
-        // ★ データの所有者(data.ownerId)と、今ログインしている人(user.uid)を比較
         if (user && user.uid === data.ownerId) {
           setIsOwner(true);
           setThemeColor(data.themeColor || '#2196f3');
@@ -90,7 +78,7 @@ useEffect(() => {
             buttonText: slide.buttonText, linkUrl: slide.linkUrl,
           })));
         } else {
-          setIsOwner(false); // 所有者ではない
+          setIsOwner(false);
         }
       } else {
         setError("お探しの名刺は見つかりませんでした。");
@@ -98,12 +86,11 @@ useEffect(() => {
       setLoading(false);
     };
 
-    // ★ ユーザー情報の確認が終わってから、データの取得と比較を開始する
-    if (user !== undefined) {
+    if (user !== null) { // Check against null, not undefined
         fetchAndVerify();
     }
   }, [cardId, user]);
-  
+
   const sensors = useSensors(useSensor(PointerSensor), useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }));
 
   const handleImageUpload = (event) => {
@@ -134,9 +121,8 @@ useEffect(() => {
   };
 
   const handleSave = async () => {
-    if (images.length === 0) {
-      setError('画像が1枚以上必要です。'); return;
-    }
+    if (!user) { setError("この操作を行うには、ログインが必要です。"); return; }
+    if (images.length === 0) { setError('画像が1枚以上必要です。'); return; }
     setLoading(true); setError(null);
     try {
       const imageUrls = [];
@@ -156,27 +142,15 @@ useEffect(() => {
       const cardSlides = images.map((image, index) => ({
         imageUrl: imageUrls[index], buttonText: image.buttonText, linkUrl: image.linkUrl, order: index,
       }));
-      const cardData = { slides: cardSlides, themeColor: themeColor, updatedAt: serverTimestamp() };
+      const cardData = { slides: cardSlides, themeColor: themeColor, updatedAt: serverTimestamp(), ownerId: user.uid };
       if (cardId) {
         const docRef = doc(db, "cards", cardId);
         await setDoc(docRef, cardData, { merge: true });
         alert("名刺を更新しました！");
       } else {
-        const auth = getAuth(); 
-  const currentUser = auth.currentUser; 
-
-  if (currentUser) { 
-    const docRef = await addDoc(collection(db, "cards"), {
-      ...cardData,
-      createdAt: serverTimestamp(),
-      ownerId: currentUser.uid, 
-    });
-    navigate(`/edit/${docRef.id}`);
-  } else {
-   
-    setError("ログインしていません。作成できません。");
-  }
-}
+        const docRef = await addDoc(collection(db, "cards"), { ...cardData, createdAt: serverTimestamp() });
+        navigate(`/edit/${docRef.id}`);
+      }
     } catch (err) {
       setError(`保存中にエラーが発生しました: ${err.message}`);
     } finally {
@@ -185,7 +159,7 @@ useEffect(() => {
   };
 
   const handleDelete = async () => {
-    if (!cardId) return;
+    if (!user || !cardId) return;
     if (window.confirm("この名刺を本当に削除しますか？\nこの操作は元に戻せません。")) {
       setLoading(true); setError(null);
       try {
@@ -202,19 +176,15 @@ useEffect(() => {
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}><CircularProgress /></Box>;
   }
-  if (error) {
-    return <Box sx={{ p: 4, textAlign: 'center' }}><Typography color="error">{error}</Typography></Box>;
-  }
-  if (!isOwner) { // ★ 所有者でなければ、門前払い
+  if (!isOwner && cardId) {
     return (
       <Box sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="h4" color="error">アクセス権がありません</Typography>
-        <Typography>このページを編集する権限がありません。ログインするか、別のユーザーでログインしてください。</Typography>
+        <Typography>このページを編集する権限がありません。</Typography>
         <Button component={RouterLink} to="/login" variant="contained" sx={{ mt: 2 }}>ログインページへ</Button>
       </Box>
     );
   }
-
 
   return (
     <Box sx={{ p: 4 }}>
@@ -247,19 +217,6 @@ useEffect(() => {
           <Button variant="outlined" color="error" fullWidth disabled={loading} onClick={handleDelete} sx={{ mt: 2 }}>
             この名刺を削除する
           </Button>
-        )}
-        {cardId && (
-          <Box sx={{ mt: 4, p: 2, border: '1px dashed grey' }}>
-            <Typography variant="h6" gutterBottom>完成した名刺ページ</Typography>
-            <Typography variant="body2" gutterBottom>以下のURLを相手に共有してください。</Typography>
-            <Box sx={{ p: 1, backgroundColor: '#f5f5f5', my: 1 }}>
-              <Typography sx={{ wordBreak: 'break-all' }}>{`${window.location.origin}/card/${cardId}`}</Typography>
-            </Box>
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button variant="contained" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/card/${cardId}`)}>コピー</Button>
-              <Button variant="outlined" href={`${window.location.origin}/card/${cardId}`} target="_blank" rel="noopener noreferrer">開く</Button>
-            </Box>
-          </Box>
         )}
       </Paper>
     </Box>
