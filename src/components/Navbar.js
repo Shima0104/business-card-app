@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
-import { signOut, onAuthStateChanged } from 'firebase/auth'; // ★ ログアウトと、アカウントの状態変化を感知する
+import { signOut, onAuthStateChanged, getAuth } from 'firebase/auth';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import { useState, useEffect } from 'react';
 
@@ -11,7 +11,8 @@ const Navbar = () => {
 
   // ★ アカウントの状態変化を、常に監視し続ける目
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const authInstance = getAuth();
+const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => { ... });
       setUser(currentUser);
     });
     return () => unsubscribe(); // 監視を止める
@@ -20,7 +21,8 @@ const Navbar = () => {
   // ★ ログアウト
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      const authInstance = getAuth();
+await signOut(authInstance);
       navigate('/login'); // ログアウトしたら、ログインの門へ
     } catch (error) {
       console.error("Logout Error:", error);
