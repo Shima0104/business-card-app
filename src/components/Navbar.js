@@ -1,23 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { getAuth, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getAuth, signOut } from 'firebase/auth';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 
-const Navbar = () => {
+// ★ App.jsから、魂の、状態を、受け取る
+const Navbar = ({ user }) => { 
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const auth = getAuth(); 
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const handleLogout = async () => {
     try {
-      const auth = getAuth(); 
+      const auth = getAuth();
       await signOut(auth);
       navigate('/login');
     } catch (error) {
@@ -34,7 +26,8 @@ const Navbar = () => {
         <Box>
           {user ? (
             <>
-              <Button color="inherit" component={RouterLink} to="/edit">新規作成</Button>
+              {/* ★ /mypage のような、マイページへの、リンクも、将来、ここに追加できる */}
+              <Button color="inherit" component={RouterLink} to="/">マイページ</Button> 
               <Button color="inherit" onClick={handleLogout}>ログアウト</Button>
             </>
           ) : (
