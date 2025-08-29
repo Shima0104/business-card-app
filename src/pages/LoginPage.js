@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth'; // ★ 現場で、直接、召喚
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Box, Button, Paper, TextField, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const LoginPage = () => {
   const navigate = useNavigate();
