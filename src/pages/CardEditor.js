@@ -8,6 +8,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Box, Button, Paper, Typography, Grid, CircularProgress, TextField, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useAuth } from '../hooks/useAuth';
 
 const CLOUDINARY_CLOUD_NAME = 'ddgrrcn6r'; 
 const CLOUDINARY_UPLOAD_PRESET = 'businesscardapp_unsigned_preset'; 
@@ -38,6 +39,7 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
 
 // --- CardEditor Component (Complete and Correct) ---
 const CardEditor = () => {
+  const { user } = useAuth();
   const { cardId } = useParams();
   const navigate = useNavigate();
 
@@ -48,13 +50,6 @@ const CardEditor = () => {
   const [user, setUser] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
 
-  useEffect(() => {
-    const auth = getAuth();
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
-    return () => unsubscribe();
-  }, []);
 
   useEffect(() => {
     const fetchAndVerify = async () => {
