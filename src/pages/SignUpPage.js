@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { Box, Button, Paper, TextField, Typography } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 
 const SignUpPage = () => {
   const navigate = useNavigate();
@@ -33,7 +34,14 @@ const SignUpPage = () => {
           <Button type="submit" variant="contained" fullWidth>登録する</Button>
         </form>
 
-
+<Box sx={{ mt: 2, textAlign: 'center' }}>
+  <Typography variant="body2">
+    すでにアカウントをお持ちですか？{' '}
+    <RouterLink to="/login" style={{ textDecoration: 'none' }}>
+      <Button variant="text">ログインはこちら</Button>
+    </RouterLink>
+  </Typography>
+</Box>
             
       </Paper>
     </Box>
