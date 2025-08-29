@@ -39,30 +39,26 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
 
 // --- CardEditor Component (Complete and Correct) ---
 const CardEditor = () => {
-  const { user } = useAuth();
   const { cardId } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth(); 
 
   const [images, setImages] = useState([]);
   const [themeColor, setThemeColor] = useState('#2196f3');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
-
 
   useEffect(() => {
     const fetchAndVerify = async () => {
-      setLoading(true);
       if (!cardId) {
         setIsOwner(true);
         setLoading(false);
         return;
       }
-      
+      setLoading(true);
       const docRef = doc(db, "cards", cardId);
       const docSnap = await getDoc(docRef);
-
       if (docSnap.exists()) {
         const data = docSnap.data();
         if (user && user.uid === data.ownerId) {
@@ -80,9 +76,14 @@ const CardEditor = () => {
       }
       setLoading(false);
     };
-
-    if (user !== null) { // Check against null, not undefined
+    if (user) { 
         fetchAndVerify();
+    } else if (cardId) { 
+        setIsOwner(false);
+        setLoading(false);
+    } else { 
+        setIsOwner(true);
+        setLoading(false);
     }
   }, [cardId, user]);
 
