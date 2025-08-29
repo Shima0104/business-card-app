@@ -31,6 +31,16 @@ const LoginPage = () => {
           {error && <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>}
           <Button type="submit" variant="contained" fullWidth>ログイン</Button>
         </form>
+
+　　　　　<Box sx={{ mt: 2, textAlign: 'center' }}>
+  <Typography variant="body2">
+    アカウントをお持ちでないですか？{' '}
+    <RouterLink to="/signup" style={{ textDecoration: 'none' }}>
+      <Button variant="text">新規登録はこちら</Button>
+    </RouterLink>
+  </Typography>
+</Box>
+            
       </Paper>
     </Box>
   );
