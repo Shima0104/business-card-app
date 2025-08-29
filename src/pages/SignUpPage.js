@@ -33,14 +33,7 @@ const SignUpPage = () => {
           <Button type="submit" variant="contained" fullWidth>登録する</Button>
         </form>
 
-<Box sx={{ mt: 2, textAlign: 'center' }}>
-  <Typography variant="body2">
-    すでにアカウントをお持ちですか？{' '}
-    <RouterLink to="/login" style={{ textDecoration: 'none' }}>
-      <Button variant="text">ログインはこちら</Button>
-    </RouterLink>
-  </Typography>
-</Box>
+
             
       </Paper>
     </Box>
