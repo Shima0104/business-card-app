@@ -7,6 +7,47 @@ import CardEditor from './pages/CardEditor';
 import CardPage from './components/CardPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute'; // ★ 絶対障壁を、召喚
+
+function App() {
+  return (
+    <Router>
+      <Navbar />
+      <Routes>
+        {/* --- 公開された、領域 --- */}
+        <Route path="/card/:cardId" element={<CardPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* --- 保護された、聖域 --- */}
+        <Route 
+          path="/" 
+          element={
+            <ProtectedRoute>
+              <CardEditor />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit" 
+          element={
+            <ProtectedRoute>
+              <CardEditor />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/edit/:cardId" 
+          element={
+            <ProtectedRoute>
+              <CardEditor />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </Router>
+  );
+}
 
 function App() {
   return (
