@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 
 import Navbar from './components/Navbar';
@@ -9,13 +9,15 @@ import CardPage from './components/CardPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 
-function App() {
-  const { user, loading } = useAuth();
+const AppContent = () => {
+  const location = useLocation();
+  const { user } = useAuth();
+
+  const showNavbar = !location.pathname.startsWith('/card/');
 
   return (
-    <Router>
-      <Navbar user={user} />
-      
+    <>
+      {showNavbar && <Navbar user={user} />}
       <Routes>
         {/* --- Public Routes --- */}
         <Route path="/card/:cardId" element={<CardPage />} />
@@ -23,23 +25,17 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         {/* --- Protected Routes --- */}
-        <Route 
-          path="/" 
-          element={
-            <ProtectedRoute>
-              <CardEditor />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/edit/:cardId" 
-          element={
-            <ProtectedRoute>
-              <CardEditor />
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="/" element={<ProtectedRoute><CardEditor /></ProtectedRoute>} />
+        <Route path="/edit/:cardId" element={<ProtectedRoute><CardEditor /></ProtectedRoute>} />
       </Routes>
+    </>
+  );
+};
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
