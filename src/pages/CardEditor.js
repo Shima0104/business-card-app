@@ -37,7 +37,6 @@ const SortableImageEditor = ({ image, onUpdate, onRemove }) => {
   );
 };
 
-// --- CardEditor Component (Complete and Correct) ---
 const CardEditor = () => {
   const { cardId } = useParams();
   const navigate = useNavigate();
@@ -48,6 +47,8 @@ const CardEditor = () => {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [generatedUrl, setGeneratedUrl] = useState('');
+
 
   useEffect(() => {
     const fetchAndVerify = async () => {
@@ -142,10 +143,15 @@ const CardEditor = () => {
       if (cardId) {
         const docRef = doc(db, "cards", cardId);
         await setDoc(docRef, cardData, { merge: true });
+        setGeneratedUrl(`${window.location.origin}/card/${cardId}`);
         alert("名刺を更新しました！");
       } else {
         const docRef = await addDoc(collection(db, "cards"), { ...cardData, createdAt: serverTimestamp() });
-        navigate(`/edit/${docRef.id}`);
+        
+        setGeneratedUrl(`${window.location.origin}/card/${docRef.id}`);
+        alert("新しい名刺を作成しました！");
+        
+        navigate(`/edit/${docRef.id}`, { replace: true });
       }
     } catch (err) {
       setError(`保存中にエラーが発生しました: ${err.message}`);
@@ -213,6 +219,19 @@ const CardEditor = () => {
           <Button variant="outlined" color="error" fullWidth disabled={loading} onClick={handleDelete} sx={{ mt: 2 }}>
             この名刺を削除する
           </Button>
+        )}
+      {generatedUrl && (
+          <Box sx={{ mt: 4, p: 2, border: '1px dashed grey' }}>
+            <Typography variant="h6" gutterBottom>完成した名刺ページ</Typography>
+            <Typography variant="body2" gutterBottom>以下のURLを相手に共有してください。</Typography>
+            <Box sx={{ p: 1, backgroundColor: '#f5f5f5', my: 1 }}>
+              <Typography sx={{ wordBreak: 'break-all' }}>{generatedUrl}</Typography>
+            </Box>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+              <Button variant="contained" onClick={() => navigator.clipboard.writeText(generatedUrl)}>コピー</Button>
+              <Button variant="outlined" href={generatedUrl} target="_blank" rel="noopener noreferrer">開く</Button>
+            </Box>
+          </Box>
         )}
       </Paper>
     </Box>
