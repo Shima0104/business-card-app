@@ -8,7 +8,7 @@ import CardEditor from './pages/CardEditor';
 import CardPage from './components/CardPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
-import MyPage from './pages.MyPage';
+import MyPage from './pages/MyPage';
 
 const AppContent = () => {
   const location = useLocation();
