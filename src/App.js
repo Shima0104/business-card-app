@@ -8,6 +8,7 @@ import CardEditor from './pages/CardEditor';
 import CardPage from './components/CardPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
+import MyPage from './pages.MyPage';
 
 const AppContent = () => {
   const location = useLocation();
@@ -27,6 +28,8 @@ const AppContent = () => {
         {/* --- Protected Routes --- */}
         <Route path="/" element={<ProtectedRoute><CardEditor /></ProtectedRoute>} />
         <Route path="/edit/:cardId" element={<ProtectedRoute><CardEditor /></ProtectedRoute>} />
+
+        <Route path="/mypage" element={<ProtectedRoute><MyPage /></ProtectedRoute>} />
       </Routes>
     </>
   );
