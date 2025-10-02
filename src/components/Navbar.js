@@ -3,7 +3,6 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { getAuth, signOut } from 'firebase/auth';
 import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 
-// ★ 王(user)は、外から、やってくる。自らは、王を、名乗らない。
 const Navbar = ({ user }) => { 
   const navigate = useNavigate();
 
@@ -26,7 +25,7 @@ const Navbar = ({ user }) => {
         <Box>
           {user ? (
             <>
-              <Button color="inherit" component={RouterLink} to="/">マイページ</Button> 
+              <Button color="inherit" component={RouterLink} to="/mypage">マイページ</Button> 
               <Button color="inherit" onClick={handleLogout}>ログアウト</Button>
             </>
           ) : (

@@ -1,5 +1,17 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, setDoc, deleteDoc } from "firebase/firestore";
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  serverTimestamp, 
+  doc, 
+  getDoc, 
+  setDoc, 
+  deleteDoc,
+  query,
+  where,
+  getDocs
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBFShKtIH8hKw-SXwIp-LlEZEsrYaWhAjU",
@@ -10,7 +22,6 @@ const firebaseConfig = {
   appId: "1:875047669215:web:54f72251cab57c6306886a",
   measurementId: "G-LVMH43VH19"
 };
-
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -23,5 +34,8 @@ export {
   doc, 
   getDoc, 
   setDoc, 
-  deleteDoc 
+  deleteDoc,
+  query,
+  where,
+  getDocs
 };
