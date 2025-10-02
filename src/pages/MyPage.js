@@ -63,33 +63,45 @@ const MyPage = () => {
             まだ作成した名刺はありません。新しい名刺を作成しましょう！
           </Typography>
         ) : (
-         <List sx={{ width: '100%' }}>
+          <List sx={{ width: '100%' }}>
             {cards.map(card => (
               <ListItem 
                 key={card.id} 
-                divider // ★ 各アイテムの間に境界線を引く
-                secondaryAction={
-                  <Button 
-                    component={RouterLink} 
-                    to={`/edit/${card.id}`} 
-                    variant="outlined"
-                  >
-                    編集
-                  </Button>
+                divider
+                 secondaryAction={
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    {/* ★★★ 1. 表示ボタン ★★★ */}
+                    <Button 
+                      component={RouterLink} 
+                      to={`/card/${card.id}`} 
+                      variant="contained"
+                      size="small"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      表示
+                    </Button>
+                    
+                    {/* ★★★ 2. 編集ボタン ★★★ */}
+                    <Button 
+                      component={RouterLink} 
+                      to={`/edit/${card.id}`} 
+                      variant="outlined"
+                      size="small"
+                    >
+                      編集
+                    </Button>
+                  </Box>
                 }
-                sx={{ py: 2 }} // ★ 上下の余白を広げる
+                sx={{ py: 2 }}
               >
-                {/* ★★★ サムネイル表示 ★★★ */}
                 <ListItemAvatar>
                   <Avatar 
-                    variant="rounded" // 四角い、アバターにする
-                    src={card.slides && card.slides[0] ? card.slides[0].imageUrl : undefined} // ★ 最初のスライドの画像を指定
-                    sx={{ width: 56, height: 56, mr: 2 }} // サイズと右の余白
-                  >
-                    {/* もし画像がなければ、代わりに文字を表示する*/}
-                  </Avatar>
+                    variant="rounded"
+                    src={card.slides && card.slides[0] ? card.slides[0].imageUrl : undefined}
+                    sx={{ width: 56, height: 56, mr: 2 }}
+                  />
                 </ListItemAvatar>
-                {/* ★★★ ここまで ★★★ */}
                 
                 <ListItemText 
                   primary={card.cardName || '無題の名刺'} 
