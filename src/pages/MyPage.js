@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { db, collection, query, where, getDocs } from '../firebase';
 import { useAuth } from '../hooks/useAuth';
-import { Box, Paper, Typography, CircularProgress, List, ListItem, ListItemText, Button } from '@mui/material';
+import { Box, Paper, Typography, CircularProgress, List, ListItem, ListItemText, Button, ListItemAvatar, Avatar } from '@mui/material';
 
 const MyPage = () => {
   const { user } = useAuth();
@@ -63,20 +63,37 @@ const MyPage = () => {
             まだ作成した名刺はありません。新しい名刺を作成しましょう！
           </Typography>
         ) : (
-          <List>
+         <List sx={{ width: '100%' }}>
             {cards.map(card => (
-              <ListItem key={card.id} secondaryAction={
-                <Button 
-                  component={RouterLink} 
-                  to={`/edit/${card.id}`} 
-                  variant="outlined"
-                >
-                  編集
-                </Button>
-              }>
+              <ListItem 
+                key={card.id} 
+                divider // ★ 各アイテムの間に境界線を引く
+                secondaryAction={
+                  <Button 
+                    component={RouterLink} 
+                    to={`/edit/${card.id}`} 
+                    variant="outlined"
+                  >
+                    編集
+                  </Button>
+                }
+                sx={{ py: 2 }} // ★ 上下の余白を広げる
+              >
+                {/* ★★★ サムネイル表示 ★★★ */}
+                <ListItemAvatar>
+                  <Avatar 
+                    variant="rounded" // 四角い、アバターにする
+                    src={card.slides && card.slides[0] ? card.slides[0].imageUrl : undefined} // ★ 最初のスライドの画像を指定
+                    sx={{ width: 56, height: 56, mr: 2 }} // サイズと右の余白
+                  >
+                    {/* もし画像がなければ、代わりに文字を表示する*/}
+                  </Avatar>
+                </ListItemAvatar>
+                {/* ★★★ ここまで ★★★ */}
+                
                 <ListItemText 
                   primary={`名刺ID: ${card.id}`} 
-                  secondary={`作成日: ${card.createdAt?.toDate().toLocaleDateString() || '不明'}`} 
+                  secondary={`最終更新日: ${card.updatedAt?.toDate().toLocaleDateString() || '不明'}`} 
                 />
               </ListItem>
             ))}
