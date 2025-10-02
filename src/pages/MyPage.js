@@ -92,7 +92,7 @@ const MyPage = () => {
                 {/* ★★★ ここまで ★★★ */}
                 
                 <ListItemText 
-                  primary={`名刺ID: ${card.id}`} 
+                  primary={card.cardName || '無題の名刺'} 
                   secondary={`最終更新日: ${card.updatedAt?.toDate().toLocaleDateString() || '不明'}`} 
                 />
               </ListItem>
