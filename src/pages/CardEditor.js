@@ -44,6 +44,7 @@ const CardEditor = () => {
 
   const [images, setImages] = useState([]);
   const [themeColor, setThemeColor] = useState('#2196f3');
+  const [cardName, setCardName] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
@@ -64,6 +65,7 @@ const CardEditor = () => {
         const data = docSnap.data();
         if (user && user.uid === data.ownerId) {
           setIsOwner(true);
+          setCardName(data.cardName || ''); 
           setThemeColor(data.themeColor || '#2196f3');
           setImages(data.slides.sort((a,b) => a.order - b.order).map(slide => ({
             id: `firebase-${slide.imageUrl}`, file: null, previewUrl: slide.imageUrl,
@@ -139,7 +141,7 @@ const CardEditor = () => {
       const cardSlides = images.map((image, index) => ({
         imageUrl: imageUrls[index], buttonText: image.buttonText, linkUrl: image.linkUrl, order: index,
       }));
-      const cardData = { slides: cardSlides, themeColor: themeColor, updatedAt: serverTimestamp(), ownerId: user.uid };
+      const cardData = { slides: cardSlides, themeColor: themeColor, updatedAt: serverTimestamp(), ownerId: user.uid, cardName: cardName };
       if (cardId) {
         const docRef = doc(db, "cards", cardId);
         await setDoc(docRef, cardData, { merge: true });
@@ -192,6 +194,16 @@ const CardEditor = () => {
     <Box sx={{ p: 4 }}>
       <Paper elevation={3} sx={{ maxWidth: '800px', mx: 'auto', p: 4 }}>
         <Typography variant="h4" gutterBottom>{cardId ? '名刺を編集' : '新しい名刺を作成'}</Typography>
+
+        <TextField
+          label="名刺の名前"
+          variant="outlined"
+          fullWidth
+          value={cardName}
+          onChange={(e) => setCardName(e.target.value)}
+          sx={{ mb: 3 }}
+        />
+    
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography variant="subtitle1">テーマカラー:</Typography>
           <input type="color" value={themeColor} onChange={(e) => setThemeColor(e.target.value)} style={{ width: '100px', height: '40px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer' }}/>
